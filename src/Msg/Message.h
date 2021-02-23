@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <set>
 
 #include "tinyxml2.h"
 #include "Network.h"
@@ -19,7 +19,7 @@ struct Message {
     uint64_t MaxDur;
 
     EndSystem* Sender;
-    std::vector<size_t> Receivers;
+    std::set<size_t> Receivers;
 
     void init(tinyxml2::XMLElement* config) {
         auto tmp = config->FirstChildElement("Type")->GetText();

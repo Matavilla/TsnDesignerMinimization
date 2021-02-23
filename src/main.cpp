@@ -23,7 +23,7 @@ int ParseArgs(int argc, char *argv[], std::string& path) {
 int main(int argc, char *argv[]) {
     std::string dataPath;
 
-    if (!ParseArgs(argc, argv, path)) {
+    if (!ParseArgs(argc, argv, dataPath)) {
         return -1;
     }
 
