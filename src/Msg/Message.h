@@ -13,12 +13,13 @@ enum class TypeMsg {
 
 struct Message {
     TypeMsg Type;
+    int Num;
     uint64_t T;
     uint64_t Size;
 
     uint64_t MaxDur;
 
-    EndSystem* Sender;
+    size_t Sender;
     std::set<size_t> Receivers;
 
     void init(tinyxml2::XMLElement* config) {
@@ -30,8 +31,8 @@ struct Message {
         } else {
             Type = TypeMsg::B;
         }
-        config->FirstChildElement("T")->QueryIntText(T);
-        config->FirstChildElement("Size")->QueryIntText(Size);
-        config->FirstChildElement("MaxDur")->QueryIntText(MaxDur);
+        config->FirstChildElement("T")->QueryUnsigned64Text(&T);
+        config->FirstChildElement("Size")->QueryUnsigned64Text(&Size);
+        config->FirstChildElement("MaxDur")->QueryUnsigned64Text(&MaxDur);
     }
 };

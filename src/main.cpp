@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     }
 
     Scheduler sch(dataPath);
-    sch->run();
+    sch.run();
 
     return 0;
 }

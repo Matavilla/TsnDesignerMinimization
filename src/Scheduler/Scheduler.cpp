@@ -4,7 +4,7 @@
 #include "tinyxml2.h"
 
 
-int comp(const Messages& a, const Messages& b) {
+int comp(const Message& a, const Message& b) {
     if (a.Type == b.Type) {
         double tmp1 = a.Size / (double) a.T;
         double tmp2 = b.Size / (double) b.T;
@@ -14,25 +14,27 @@ int comp(const Messages& a, const Messages& b) {
     }
 }
 
-Scheduler::Scheduler(const std::string& dataPath) {
+Scheduler::Scheduler(const std::string& dataPath) : RoutFunc(new RoutingDijkstra) {
     tinyxml2::XMLDocument doc;
     doc.LoadFile(dataPath.c_str());
 
-    for (iter = doc.FirstChildElement("Msg"); iter != nullptr; iter = iter->NextSiblingElement("Msg")) {
+    size_t i = 0;
+    for (auto iter = doc.FirstChildElement("Msg"); iter != nullptr; iter = iter->NextSiblingElement("Msg")) {
         MSG.emplace_back();
         MSG.back().init(iter);
+        MSG.back().Num = i;
+        i++;
     }
     
     std::sort(MSG.begin(), MSG.end(), comp);
 
     G.init(doc.FirstChildElement("Network"), MSG);
 
-    RoutFunc = new RoutingDijkstra;
 }
 
 
 void Scheduler::run() {
     for (auto& i : MSG) {
-        RoutFunc
+//        RoutFunc
     }
 }

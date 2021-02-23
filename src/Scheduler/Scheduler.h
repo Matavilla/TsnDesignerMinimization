@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "Network.h"
 #include "Message.h"
@@ -9,10 +10,10 @@
 
 
 class Scheduler {
-    std::unique_ptr<RoutBase> RoutFunc;
-    std::unique_ptr<TransmissionDurBase> DurMsg;
+    std::unique_ptr<RoutingBase> RoutFunc;
+//    std::unique_ptr<TransmissionDurBase> DurMsg;
 
-    std::vector<Messages> MSG;
+    std::vector<Message> MSG;
     Network G;
 public:
     Scheduler(const std::string& dataPath);

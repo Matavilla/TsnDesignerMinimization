@@ -6,7 +6,7 @@
 #include "Network.h"
 #include "Message.h"
 
-using std::vector<std::vector<Link*>> Paths;
+using Paths = std::vector<std::vector<Link*>>;
 
 class RoutingBase {
 public:

@@ -12,6 +12,8 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
     std::vector<unsigned> prev(G.Switchs.size());
     std::set<unsigned> usedLinks; // use Length = 0 in this Links
     std::set<size_t> receivers(msg.Receivers);
+    const EndSystem& sender = G.EndSystems[msg.Sender];
+
 
     while (!receivers.empty()) {
         bool findPath = false;
@@ -19,13 +21,13 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
         for (auto& i : d) i = std::numeric_limits<double>::max();
         for (auto& i : prev) i = -2;
         
-        for (auto& i : msg.Sender->ConnectedLinks) {
+        for (auto& i : sender.ConnectedLinks) {
             d[i->To->Num] = (!usedLinks.contains(i->Num)) ? i->weight() : 0;
             prev[i->To->Num] = -1; // prev = ES
         }
         
         for (size_t i = 0; i < visited.size(); i++) {
-            size_t v = -1;
+            int v = -1;
             for (size_t j = 0; j < d.size(); j++) {
                 if (!visited[j] && (v == -1 or d[j] < d[v])) {
                     v = j;
@@ -42,7 +44,7 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
                         std::vector<Link*> path;
 
                         path.push_back(k);
-                        size_t l, curNum;
+                        int l, curNum;
                         for (l = prev[v], curNum = v; l != -1 ; curNum = v, l = prev[l]) {
                             for (auto& z : G.Switchs[l].ConnectedLinks) {
                                 if (z->To->Num == curNum) {
@@ -52,7 +54,7 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
                                 }
                             }
                         }
-                        for (auto& z : msg.Sender->ConnectedLinks) {
+                        for (auto& z : sender.ConnectedLinks) {
                             if (z->To->Num == curNum) {
                                 path.push_back(z);
                                 usedLinks.insert(z->Num);
@@ -66,7 +68,7 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
                     }
                     continue;
                 }
-                len = (!usedLinks.contains(k->Num)) ? k->weight() : 0;
+                double len = (!usedLinks.contains(k->Num)) ? k->weight() : 0;
                 if (d[v] + len < d[k->To->Num]) {
                     d[k->To->Num] = d[v] + len;
                     prev[k->To->Num] = v;
@@ -77,6 +79,7 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
         if (!findPath) {
             std::cout << "DON'T FIND ROUT FOR " << msg.Num << std::endl; 
             return false;
+        }
     }
     return true;
 }

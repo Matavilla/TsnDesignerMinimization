@@ -5,7 +5,7 @@
 #include <set>
 
 #include "tinyxml2.h"
-#include "GCL.h"
+//#include "GCL.h"
 #include "Message.h"
 
 enum class NetElemType {
@@ -21,7 +21,7 @@ struct NetElem {
     virtual ~NetElem() = default;
 };
 
-struct Link : NetElem {
+struct Link : public NetElem {
     int Length;
     int Bandwidth;
     
@@ -30,28 +30,28 @@ struct Link : NetElem {
     NetElem* From;
     NetElem* To;
 
-    Link() : Type(NetElemType::LINK) {};
+    Link() { Type = NetElemType::LINK; };
 
     double weight() const {
         return ((double) Length) / (UsedCount + 1);
     }
 };
 
-struct EndSystem : NetElem {
+struct EndSystem :public NetElem {
     std::vector<Message*> Msg; // fill
     std::vector<Link*> ConnectedLinks;
     // std::vector<std::reference_wrapper<Switch>> ConnectedSwitchs;
 
-    EndSystem() : Type(NetElemType::ES) {};
+    EndSystem() { Type = NetElemType::ES; };
 };
 
-struct Switch : NetElem {
+struct Switch : public NetElem {
     std::vector<Link*> ConnectedLinks;
-    std::vector<GCL> PortGCL;
+    // std::vector<GCL> PortGCL;
     // std::vector<std::reference_wrapper<EndSystem>> ConnectedEndSystems;
     // std::vector<std::reference_wrapper<Switch>> ConnectedSwitchs;
 
-    Switch() : Type(NetElemType::SWITCH) {};
+    Switch() { Type = NetElemType::SWITCH; };
 };
 
 struct Network {

@@ -35,6 +35,7 @@ void Network::init(tinyxml2::XMLElement* config, std::vector<Message>& msgs) {
             iter2 = iter->FirstChildElement("From Switch");
             iter2->QueryIntText(&tmp);
             Switchs[tmp].ConnectedLinks.emplace_back(&Links[i]);
+            // Switchs[tmp].PortGCL.emplace_back();
             Links[i].From = &Switchs[tmp];
         }
 
@@ -56,11 +57,11 @@ void Network::init(tinyxml2::XMLElement* config, std::vector<Message>& msgs) {
         EndSystems[i].Num = i;
         int tmp;
 
-        iter2 = iter->FirstChildElement("Sender for MSG");
+        XMLElement* iter2 = iter->FirstChildElement("Sender for MSG");
         for (; iter2 != nullptr; iter2 = iter2->NextSiblingElement("Sender for MSG")) {
             iter2->QueryIntText(&tmp);
             EndSystems[i].Msg.emplace_back(&msgs[tmp]);
-            msgs[tmp].Sender = &EndSystems[i];
+            msgs[tmp].Sender = i;
         }
 
         iter2 = iter->FirstChildElement("Receiver for MSG");
@@ -76,9 +77,9 @@ void Network::init(tinyxml2::XMLElement* config, std::vector<Message>& msgs) {
     }
 }
 
-double Network::AvgLength() {
+double Network::AvgLength() const {
     double tmp = 0;
-    for (auto i& : Links) {
+    for (auto& i : Links) {
         if (i.UsedCount) {
             tmp += i.Length;
         }
