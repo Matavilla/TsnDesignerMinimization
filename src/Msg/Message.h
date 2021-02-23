@@ -1,6 +1,6 @@
 #pragma once
+
 #include <vector>
-#include <functional>
 
 #include "tinyxml2.h"
 #include "Network.h"
@@ -12,23 +12,23 @@ enum class TypeMsg {
 };
 
 struct Message {
-    TypeMsg type;
+    TypeMsg Type;
     uint64_t T;
     uint64_t Size;
 
     uint64_t MaxDur;
 
-    std::reference_wrapper<EndSystem> Sender;
-    std::set<size_t> Receivers;
+    EndSystem* Sender;
+    std::vector<size_t> Receivers;
 
     void init(tinyxml2::XMLElement* config) {
         auto tmp = config->FirstChildElement("Type")->GetText();
         if (tmp[0] == 'T') {
-            type = TypeMsg::TT;
+            Type = TypeMsg::TT;
         } else if (tmp[0] == 'A') {
-            type = TypeMsg::A;
+            Type = TypeMsg::A;
         } else {
-            type = TypeMsg::B;
+            Type = TypeMsg::B;
         }
         config->FirstChildElement("T")->QueryIntText(T);
         config->FirstChildElement("Size")->QueryIntText(Size);
