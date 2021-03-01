@@ -1,12 +1,16 @@
 #pragma once
 
 #include <vector>
+#include <set>
 #include <functional>
 
 #include "Network.h"
 #include "Message.h"
 
-using Paths = std::vector<std::vector<Link*>>;
+struct Paths {
+    std::vector<std::vector<Link*>> Routs;
+    std::set<Link*> UsedLinks;
+};
 
 class RoutingBase {
 public:

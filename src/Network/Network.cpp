@@ -77,12 +77,12 @@ void Network::init(tinyxml2::XMLElement* config, std::vector<Message>& msgs) {
     }
 }
 
-double Network::AvgLength() const {
-    double tmp = 0;
+uint64_t Network::Length() const {
+    uint64_t tmp = 0;
     for (auto& i : Links) {
         if (i.UsedCount) {
             tmp += i.Length;
         }
     }
-    return tmp / MaxLength;
+    return tmp; 
 }

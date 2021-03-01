@@ -20,6 +20,7 @@ endif()
 #add_library(XmlLibrary XmlLibrary/tinyxml2.cpp XmlLibrary/tinyxml2.h)
 
 include_directories(Msg)
+include_directories(GCL)
 include_directories(Network)
 include_directories(RoutAlgo)
 include_directories(Scheduler)
@@ -30,6 +31,7 @@ set(CPP_SOURCES
     RoutAlgo/RoutingDijkstra.cpp
     Scheduler/Scheduler.cpp
     XmlLibrary/tinyxml2.cpp
+    GCL/GCL.cpp
     main.cpp)
 
 set(CPP_HEADERS
@@ -37,6 +39,7 @@ set(CPP_HEADERS
     Scheduler/Scheduler.h
     XmlLibrary/tinyxml2.h
     Msg/Message.h
+    GCL/GCL.h
     RoutAlgo/RoutingDijkstra.h
     RoutAlgo/RoutBase.h)
 

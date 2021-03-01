@@ -1,5 +1,4 @@
 #include <iostream>
-#include <set>
 #include <limits>
 #include <algorithm>
 
@@ -10,7 +9,6 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
     std::vector<bool> visited(G.Switchs.size());
     std::vector<double> d(G.Switchs.size());
     std::vector<unsigned> prev(G.Switchs.size());
-    std::set<unsigned> usedLinks; // use Length = 0 in this Links
     std::set<size_t> receivers(msg.Receivers);
     const EndSystem& sender = G.EndSystems[msg.Sender];
 
@@ -22,7 +20,7 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
         for (auto& i : prev) i = -2;
         
         for (auto& i : sender.ConnectedLinks) {
-            d[i->To->Num] = (!usedLinks.contains(i->Num)) ? i->weight() : 0;
+            d[i->To->Num] = (!rout.UsedLinks.contains(i.get())) ? i->weight() : 0;
             prev[i->To->Num] = -1; // prev = ES
         }
         
@@ -49,7 +47,7 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
                             for (auto& z : G.Switchs[l].ConnectedLinks) {
                                 if (z->To->Num == curNum) {
                                     path.push_back(z);
-                                    usedLinks.insert(z->Num);
+                                    rout.UsedLinks.insert(z);
                                     break;
                                 }
                             }
@@ -57,18 +55,18 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
                         for (auto& z : sender.ConnectedLinks) {
                             if (z->To->Num == curNum) {
                                 path.push_back(z);
-                                usedLinks.insert(z->Num);
+                                rout.UsedLinks.insert(z);
                                 break;
                             }
                         }
                         std::reverse(path.begin(), path.end());
 
-                        rout.emplace_back(std::move(path));
+                        rout.Routs.emplace_back(std::move(path));
                         break;
                     }
                     continue;
                 }
-                double len = (!usedLinks.contains(k->Num)) ? k->weight() : 0;
+                double len = (!rout.UsedLinks.contains(k.get())) ? k->weight() : 0;
                 if (d[v] + len < d[k->To->Num]) {
                     d[k->To->Num] = d[v] + len;
                     prev[k->To->Num] = v;

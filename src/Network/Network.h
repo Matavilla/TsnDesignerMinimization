@@ -65,6 +65,6 @@ struct Network {
 
     void init(tinyxml2::XMLElement* config, std::vector<Message>& msgs);
 
-    double AvgLength() const;
+    uint64_t Length() const;
 };
 

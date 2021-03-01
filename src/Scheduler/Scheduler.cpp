@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 
 #include "Scheduler.h"
 #include "tinyxml2.h"
@@ -25,16 +26,37 @@ Scheduler::Scheduler(const std::string& dataPath) : RoutFunc(new RoutingDijkstra
         MSG.back().Num = i;
         i++;
     }
+    MaxMsg = i;
     
     std::sort(MSG.begin(), MSG.end(), comp);
 
     G.init(doc.FirstChildElement("Network"), MSG);
-
 }
 
 
 void Scheduler::run() {
-    for (auto& i : MSG) {
-//        RoutFunc
+    std::list<Paths> routes;
+    for (auto i = 0; i < MSG.size(); i++) {
+        if (!(*RoutFunc) (G, MSG[i], routes[i])) {
+            routes.erase(routes.begin() + i);
+            MSG.erase(MSG.begin() + i);
+            continue;
+        }
     }
+    printAns();
+}
+
+void Scheduler::printAns() const {
+    std::cout << "Length: " << G.Length() << std::endl;
+    std::cout << "MaxLength: " << G.MaxLength << std::endl;
+    std::cout << "########################################" << std::endl;
+    std::cout << "AvgLength: " << ((double) G.Length()) / G.MaxLength << std::endl;
+
+    std::cout << "########################################" << std::endl;
+
+    std::cout << "Msg: " << MSG.size() << std::endl;
+    std::cout << "MaxMsg: " << MaxMsg << std::endl;
+    std::cout << "########################################" << std::endl;
+    std::cout << "AvgMsg: " << ((double) MSG.size()) / MaxMsg << std::endl;
+    std::cout << "########################################" << std::endl;
 }
