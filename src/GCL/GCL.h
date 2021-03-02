@@ -5,15 +5,18 @@
 
 #include "RoutBase.h"
 #include "Message.h"
+#include "Network.h"
 
 struct GCLNote {
+    int NumQueue;
     uint64_t NumMsg;
-    uint64_t Dur;
-    uint64_t Offset;
+    double Dur;
+    double Offset;
 };
 
 struct GCL {
     static uint64_t Period;
+    Link* Link_;
     std::list<GCLNote> Sch;
 
     static void SetPeriod(const std::vector<Message>& MSG);
