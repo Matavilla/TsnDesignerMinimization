@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "Scheduler.h"
+#include "GCL.h"
 #include "tinyxml2.h"
 
 
@@ -30,20 +31,86 @@ Scheduler::Scheduler(const std::string& dataPath) : RoutFunc(new RoutingDijkstra
     
     std::sort(MSG.begin(), MSG.end(), comp);
 
+    GCL::SetPeriod(MSG);
+
     G.init(doc.FirstChildElement("Network"), MSG);
 }
 
 
 void Scheduler::run() {
     std::list<Paths> routes;
-    for (auto i = 0; i < MSG.size(); i++) {
+    for (int i = 0; i < MSG.size(); i++) {
         if (!(*RoutFunc) (G, MSG[i], routes[i])) {
             routes.erase(routes.begin() + i);
             MSG.erase(MSG.begin() + i);
+            i -= 1;
             continue;
         }
+
+        if (!assignedMsg(msg, routes[i])) {
+            routes.erase(routes.begin() + i);
+            MSG.erase(MSG.begin() + i);
+            i -= 1;
+            continue;
+        }
+        
+
+
     }
     printAns();
+}
+
+bool Scheduler::assignedMsg(Message& msg, Paths& r) {
+    size_t countMsgs = GCL::Period / msg.T;
+    for (size_t routI = 0; routI < r.Routs.size(); routI++) {
+        {
+            Link* link = r.Routs[routI][0];
+            std::vector<std::pair<uint64_t, uint64_t>> tmp(countMsgs)
+            for (size_t it = 0; it < countMsgs; it++) {
+                tmp[it].first = 0;
+            }
+            r.Times[link] = std::move(tmp);
+
+            EnsSystem* es = dynamic_cast<EndSystem*>(link->From);
+            size_t j = 0;
+            for (; j < es->ConnectedLinks.size(); j++) {
+                if (sw->ConnectedLinks[j] == link) {
+                    break;
+                }
+            }
+            if (!es->PortGCL[j].addMsg(msg, r.Times[link]) {
+                // все плохо
+            }
+        }
+        for (size_t pathI = 1; pathI < r.Routs[routI].size(); pathI++) {
+            Link* link = r.Routs[routI][pathI];
+            if (r.Times.contains(link) {
+                continue;
+            }
+            std::vector<std::pair<uint64_t, uint64_t>> tmp(countMsgs)
+            for (size_t it = 0; it < countMsgs; it++) {
+                tmp[it].first = r.Times[r.Routs[routI][pathI - 1]][it].second;
+            }
+            r.Times[link] = std::move(tmp);
+            
+            Switch* sw = dynamic_cast<Switch*>(link->From);
+            size_t j = 0;
+            for (; j < sw->ConnectedLinks.size(); j++) {
+                if (sw->ConnectedLinks[j] == link) {
+                    break;
+                }
+            }
+            if (!sw->PortGCL[j].addMsg(msg, r.Times[link]) {
+                // все плохо
+            }
+        }
+        for (auto& it : r.Times[r.Routs[routI].back()]) {
+            if (it.second > msg.MaxDur) {
+            // все плохо с временем для ТТ
+            }
+        }
+
+    }
 }
 
 void Scheduler::printAns() const {

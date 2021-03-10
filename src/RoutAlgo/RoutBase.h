@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <set>
+#include <map>
+#include <utility>
 #include <functional>
 
 #include "Network.h"
@@ -10,6 +12,7 @@
 struct Paths {
     std::vector<std::vector<Link*>> Routs;
     std::set<Link*> UsedLinks;
+    std::map<Link*, std::vector<std::pair<uint64_t, uint64_t>>> Times;
 };
 
 class RoutingBase {

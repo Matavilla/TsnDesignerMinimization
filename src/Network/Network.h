@@ -40,6 +40,7 @@ struct Link : public NetElem {
 struct EndSystem :public NetElem {
     std::vector<Message*> Msg; // fill
     std::vector<Link*> ConnectedLinks;
+    std::vector<GCL> PortGCL;
     // std::vector<std::reference_wrapper<Switch>> ConnectedSwitchs;
 
     EndSystem() { Type = NetElemType::ES; };
@@ -47,7 +48,7 @@ struct EndSystem :public NetElem {
 
 struct Switch : public NetElem {
     std::vector<Link*> ConnectedLinks;
-    // std::vector<GCL> PortGCL;
+    std::vector<GCL> PortGCL;
     // std::vector<std::reference_wrapper<EndSystem>> ConnectedEndSystems;
     // std::vector<std::reference_wrapper<Switch>> ConnectedSwitchs;
 

@@ -21,5 +21,7 @@ public:
     
     void run();
 
+    bool assignedMsg(Message& msg, Paths& rout);
+
     void printAns() const;
 };
