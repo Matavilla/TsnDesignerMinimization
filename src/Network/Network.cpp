@@ -30,13 +30,13 @@ void Network::init(tinyxml2::XMLElement* config, std::vector<Message>& msgs) {
         if (iter2) {
             iter2->QueryIntText(&tmp);
             EndSystems[tmp].ConnectedLinks.emplace_back(&Links[i]);
-            EndSystems[tmp].PortGCL.emplace_back();
+            EndSystems[tmp].PortGCL[&Links[i]] = GCL(); 
             Links[i].From = &EndSystems[tmp];
         } else {
             iter2 = iter->FirstChildElement("From Switch");
             iter2->QueryIntText(&tmp);
             Switchs[tmp].ConnectedLinks.emplace_back(&Links[i]);
-            Switchs[tmp].PortGCL.emplace_back();
+            Switchs[tmp].PortGCL[&Links[i]] = GCL();
             Links[i].From = &Switchs[tmp];
         }
 

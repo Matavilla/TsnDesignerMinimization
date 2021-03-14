@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <limits>
 
 #include "Scheduler.h"
 #include "GCL.h"
@@ -48,19 +49,61 @@ void Scheduler::run() {
         }
 
         if (!assignedMsg(msg, routes[i])) {
+            // огр.перебор
+            
+
             routes.erase(routes.begin() + i);
             MSG.erase(MSG.begin() + i);
             i -= 1;
             continue;
         }
         
+        for (auto& p : routes[i].Routs) {
+            for (auto& it : routes[i].Times[p.back()]) {
+                if (it.second > msg.MaxDur) {
+                // все плохо с временем для ТТ
+                // огр.перебор + обойти ебучие линки с буферизацией
+                }
+            }
+        }
 
+        for (auto& link : routes[i].UsedLinks) {
+            link->UsedCount++;
+        }
 
     }
     printAns();
 }
 
-bool Scheduler::assignedMsg(Message& msg, Paths& r) {
+bool Scheduler::tryFoundBypass(Link* link, Message& msg, Paths& r, size_t deep) {
+    int prevLength = link->Length;
+    link->Length = std::numeric_limits<int>::max();
+    for (auto& it : r.UsedLinks) {
+        if (dynamic_cast<EndSystem*>(link->From)) {
+            dynamic_cast<EndSystem*>(link->From)->PortGCL[link].eraseMsg(msg);
+        } else {
+            dynamic_cast<Switch*>(link->From)->PortGCL[link].eraseMsg(msg);
+        }
+    }
+
+    r.Routs.clear();
+    r.UsedLinks.clear();
+    r.Times.clear();
+
+    if (!(*RoutFunc) (G, msg, r)) {
+        std::cout << "NO, NO, IT is strange" << std::endl;
+    }
+
+    bool ans = assignedMsg(msg, r, deep + 1);
+    link->Length = prevLength;
+    return ans;
+}
+
+bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass) {
+    if (deep = 5) {
+        return false;
+    }
+
     size_t countMsgs = GCL::Period / msg.T;
     for (size_t routI = 0; routI < r.Routs.size(); routI++) {
         {
@@ -72,14 +115,13 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r) {
             r.Times[link] = std::move(tmp);
 
             EnsSystem* es = dynamic_cast<EndSystem*>(link->From);
-            size_t j = 0;
-            for (; j < es->ConnectedLinks.size(); j++) {
-                if (sw->ConnectedLinks[j] == link) {
-                    break;
-                }
-            }
-            if (!es->PortGCL[j].addMsg(msg, r.Times[link]) {
+
+            if (!es->PortGCL[link].addMsg(msg, r.Times[link]) {
                 // все плохо
+                if (flagBypass) {
+                    return tryFoundBypass(link, msg, r, deep);
+                }
+                return false;
             }
         }
         for (size_t pathI = 1; pathI < r.Routs[routI].size(); pathI++) {
@@ -94,24 +136,105 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r) {
             r.Times[link] = std::move(tmp);
             
             Switch* sw = dynamic_cast<Switch*>(link->From);
-            size_t j = 0;
-            for (; j < sw->ConnectedLinks.size(); j++) {
-                if (sw->ConnectedLinks[j] == link) {
+
+            if (!sw->PortGCL[link].addMsg(msg, r.Times[link]) {
+                // все плохо
+                if (flagBypass) {
+                    return tryFoundBypass(link, msg, r, deep);
+                }
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool next_combination(std::vector<int>& a, int n) {
+    int k = a.size();
+    for (int i = k - 1; i >= 0; --i) {
+        if (a[i] < n - k + i + 1) {
+            ++a[i];
+            for (int j = i + 1; j < k; ++j) {
+                a[j] = a[j - 1] + 1;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Scheduler::limitedSearch(int assignedMsgIndex, std::list<Paths>& routes, size_t subSetSize = 2) {
+    std::vector<size_t> indexes(subSetSize);
+    for (size_t i = 0; i < subSetSize; i++) indexes[i] = i;
+    do {
+        // снимаем сообщения
+        for (auto& i : indexes) {
+            routes[i].Times.clear();
+            for (auto& link : routes[i].UsedLinks) {
+                if (dynamic_cast<EndSystem*>(link->From)) {
+                    dynamic_cast<EndSystem*>(link->From)->PortGCL[link].eraseMsg(MSG[i]);
+                } else {
+                    dynamic_cast<Switch*>(link->From)->PortGCL[link].eraseMsg(MSG[i]);
+                }
+            }
+        }
+        
+        if (assignedMsg(MSG[assignedMsgIndex], routes[assignedMsgIndex])) {
+            bool flag = false;
+            for (auto& i : indexes) {
+                if (!assignedMsg(MSG[i], routes[i], 0, false)) {
+                    flag = true;
+                    break;
+                }
+
+                for (auto& p : routes[i].Routs) {
+                    for (auto& it : routes[i].Times[p.back()]) {
+                        if (it.second > MSG[i].MaxDur) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (flag) {
                     break;
                 }
             }
-            if (!sw->PortGCL[j].addMsg(msg, r.Times[link]) {
-                // все плохо
-            }
-        }
-        for (auto& it : r.Times[r.Routs[routI].back()]) {
-            if (it.second > msg.MaxDur) {
-            // все плохо с временем для ТТ
+
+            if (flag) {
+                for (auto& i : indexes) {
+                    routes[i].Times.clear();
+                    for (auto& link : routes[i].UsedLinks) {
+                        if (dynamic_cast<EndSystem*>(link->From)) {
+                            dynamic_cast<EndSystem*>(link->From)->PortGCL[link].eraseMsg(MSG[i]);
+                        } else {
+                            dynamic_cast<Switch*>(link->From)->PortGCL[link].eraseMsg(MSG[i]);
+                        }
+                    }
+                }
+            } else {
+                return true;
             }
         }
 
-    }
-}
+        // назначаем их
+        for (auto& i : indexes) {
+            if (!assignedMsg(MSG[i], routes[i])) {
+                std::cout << "it's not correct limit search" << std::endl;
+            }
+
+            for (auto& p : routes[i].Routs) {
+                for (auto& it : routes[i].Times[p.back()]) {
+                    if (it.second > MSG[i].MaxDur) {
+                        std::cout << "it's not correct limit search in time" << std::endl;
+                    }
+                }
+        }
+
+    } while (next_combination(indexes, assignedMsgIndex - 1));
+
+    return false;
+};
 
 void Scheduler::printAns() const {
     std::cout << "Length: " << G.Length() << std::endl;

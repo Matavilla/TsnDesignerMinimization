@@ -3,9 +3,10 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 
 #include "tinyxml2.h"
-//#include "GCL.h"
+#include "GCL.h"
 #include "Message.h"
 
 enum class NetElemType {
@@ -40,7 +41,7 @@ struct Link : public NetElem {
 struct EndSystem :public NetElem {
     std::vector<Message*> Msg; // fill
     std::vector<Link*> ConnectedLinks;
-    std::vector<GCL> PortGCL;
+    std::map<Link*, GCL> PortGCL;
     // std::vector<std::reference_wrapper<Switch>> ConnectedSwitchs;
 
     EndSystem() { Type = NetElemType::ES; };
@@ -48,7 +49,7 @@ struct EndSystem :public NetElem {
 
 struct Switch : public NetElem {
     std::vector<Link*> ConnectedLinks;
-    std::vector<GCL> PortGCL;
+    std::map<Link*, GCL> PortGCL;
     // std::vector<std::reference_wrapper<EndSystem>> ConnectedEndSystems;
     // std::vector<std::reference_wrapper<Switch>> ConnectedSwitchs;
 

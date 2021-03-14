@@ -64,7 +64,7 @@ bool addMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>>& time
                     it++;
                     bool endQueue = false;
                     while (it != Sch.end() && (it->Offset - end) < timeForTransfer) {
-                        if (it->NumQueue == 7) {
+                        if (it->NumQueue == 5) {
                             endQueue = true;
                             break;
                         }
