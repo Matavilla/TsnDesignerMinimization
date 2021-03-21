@@ -48,22 +48,31 @@ void Scheduler::run() {
             continue;
         }
 
-        if (!assignedMsg(msg, routes[i])) {
+        if (!assignedMsg(MSG[i], routes[i])) {
             // огр.перебор
-            
-
-            routes.erase(routes.begin() + i);
-            MSG.erase(MSG.begin() + i);
-            i -= 1;
-            continue;
+            if (!limitedSearch(i, routes)) {
+                routes.erase(routes.begin() + i);
+                MSG.erase(MSG.begin() + i);
+                i -= 1;
+                continue;
+            }
         }
         
-        for (auto& p : routes[i].Routs) {
-            for (auto& it : routes[i].Times[p.back()]) {
-                if (it.second > msg.MaxDur) {
-                // все плохо с временем для ТТ
-                // огр.перебор + обойти ебучие линки с буферизацией
+        if (!checkTime(MSG[i], routes[i])) {
+            // огр.перебор + обойти ебучие линки с буферизацией
+            bool flag = false;
+            for (size_t j = 1; j <= 3; j++) {
+                if (tryBypassSwitchWithBuff(i, routes, j)) {
+                    flag = true;
+                    break;
                 }
+            }
+
+            if (!flag) {
+                routes.erase(routes.begin() + i);
+                MSG.erase(MSG.begin() + i);
+                i -= 1;
+                continue;
             }
         }
 
@@ -75,9 +84,18 @@ void Scheduler::run() {
     printAns();
 }
 
-bool Scheduler::tryFoundBypass(Link* link, Message& msg, Paths& r, size_t deep) {
-    int prevLength = link->Length;
-    link->Length = std::numeric_limits<int>::max();
+bool Scheduler::checkTime(Message& msg, Path& r) {
+    for (auto& p : r) {
+        for (auto& it : r.Times[p.back()]) {
+            if (it.second > msg.MaxDur) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void Scheduler::deleteMsg(Message& msg, Path& r) {
     for (auto& it : r.UsedLinks) {
         if (dynamic_cast<EndSystem*>(link->From)) {
             dynamic_cast<EndSystem*>(link->From)->PortGCL[link].eraseMsg(msg);
@@ -85,16 +103,79 @@ bool Scheduler::tryFoundBypass(Link* link, Message& msg, Paths& r, size_t deep) 
             dynamic_cast<Switch*>(link->From)->PortGCL[link].eraseMsg(msg);
         }
     }
-
-    r.Routs.clear();
-    r.UsedLinks.clear();
     r.Times.clear();
+}
 
-    if (!(*RoutFunc) (G, msg, r)) {
+bool Scheduler::tryBypassSwitchWithBuff(int index, std::list<Paths>& routes, size_t subSetSize) {
+    Message& msg = MSG[index];
+    Paths& r = routes[i];
+
+    size_t n = r.UsedLinks.size();
+    std::vector<size_t> indexes(subSetSize);
+    for (size_t i = 0; i < subSetSize; i++) indexes[i] = i;
+
+    deleteMsg(msg, r);
+
+    do {
+        std::vector<int> prevLength(subSetSize);
+        {
+            size_t j = 0;
+            for (auto& i : indexes) {
+                prevLength[j] = (r.UsedLinks.begin() + i)->Length;
+                (r.UsedLinks.begin() + i)->Length = std::numeric_limits<int>::max();
+                j++;
+            }
+        }
+
+        Paths tmp;
+        bool flag = false;
+        if ((*RoutFunc) (G, msg, tmp)) {
+            if (!assignedMsg(msg, tmp)) {
+                if (limitedSearch(index, routes)) {
+                    flag = true;
+                }
+            } else {
+                flag = true;
+            }
+        }
+
+        if (flag) {
+            if (checkTime(msg, tmp)) {
+                r = std::move(tmp);
+                return true;
+            } else {
+                deleteMsg(msg, tmp);
+            }
+        }
+
+        {
+            size_t j = 0;
+            for (auto& i : indexes) {
+                (r.UsedLinks.begin() + i)->Length = prevLength[j];
+                j++;
+            }
+        }
+    } while (next_combination(indexes, n - 1));
+
+    return false;
+}
+
+bool Scheduler::tryFoundBypass(Link* link, Message& msg, Paths& r, size_t deep) {
+    int prevLength = link->Length;
+    link->Length = std::numeric_limits<int>::max();
+
+    Paths tmp;
+
+    if (!(*RoutFunc) (G, msg, tmp)) {
         std::cout << "NO, NO, IT is strange" << std::endl;
     }
 
-    bool ans = assignedMsg(msg, r, deep + 1);
+    bool ans = assignedMsg(msg, tmp, deep + 1);
+
+    if (ans) {
+        r = std::move(tmp);
+    }
+
     link->Length = prevLength;
     return ans;
 }
@@ -139,6 +220,8 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
 
             if (!sw->PortGCL[link].addMsg(msg, r.Times[link]) {
                 // все плохо
+                deleteMsg(msg, r);
+
                 if (flagBypass) {
                     return tryFoundBypass(link, msg, r, deep);
                 }
@@ -163,20 +246,14 @@ bool next_combination(std::vector<int>& a, int n) {
     return false;
 }
 
-bool Scheduler::limitedSearch(int assignedMsgIndex, std::list<Paths>& routes, size_t subSetSize = 2) {
+bool Scheduler::limitedSearch(int assignedMsgIndex, std::list<Paths>& routes, size_t subSetSize) {
     std::vector<size_t> indexes(subSetSize);
     for (size_t i = 0; i < subSetSize; i++) indexes[i] = i;
+
     do {
         // снимаем сообщения
         for (auto& i : indexes) {
-            routes[i].Times.clear();
-            for (auto& link : routes[i].UsedLinks) {
-                if (dynamic_cast<EndSystem*>(link->From)) {
-                    dynamic_cast<EndSystem*>(link->From)->PortGCL[link].eraseMsg(MSG[i]);
-                } else {
-                    dynamic_cast<Switch*>(link->From)->PortGCL[link].eraseMsg(MSG[i]);
-                }
-            }
+            deleteMsg(MSG[i], routes[i]); 
         }
         
         if (assignedMsg(MSG[assignedMsgIndex], routes[assignedMsgIndex])) {
@@ -187,31 +264,18 @@ bool Scheduler::limitedSearch(int assignedMsgIndex, std::list<Paths>& routes, si
                     break;
                 }
 
-                for (auto& p : routes[i].Routs) {
-                    for (auto& it : routes[i].Times[p.back()]) {
-                        if (it.second > MSG[i].MaxDur) {
-                            flag = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (flag) {
+                if (!checkTime(MSG[i], routes[i]) {
+                    flag = true;
                     break;
                 }
             }
 
             if (flag) {
                 for (auto& i : indexes) {
-                    routes[i].Times.clear();
-                    for (auto& link : routes[i].UsedLinks) {
-                        if (dynamic_cast<EndSystem*>(link->From)) {
-                            dynamic_cast<EndSystem*>(link->From)->PortGCL[link].eraseMsg(MSG[i]);
-                        } else {
-                            dynamic_cast<Switch*>(link->From)->PortGCL[link].eraseMsg(MSG[i]);
-                        }
-                    }
+                    deleteMsg(MSG[i], routes[i]); 
                 }
+
+                deleteMsg(MSG[assignedMsgIndex], routes[assignedMsgIndex]); 
             } else {
                 return true;
             }
@@ -223,12 +287,9 @@ bool Scheduler::limitedSearch(int assignedMsgIndex, std::list<Paths>& routes, si
                 std::cout << "it's not correct limit search" << std::endl;
             }
 
-            for (auto& p : routes[i].Routs) {
-                for (auto& it : routes[i].Times[p.back()]) {
-                    if (it.second > MSG[i].MaxDur) {
-                        std::cout << "it's not correct limit search in time" << std::endl;
-                    }
-                }
+            if (!checkTime(MSG[i], routes[i]) {
+                std::cout << "it's not correct limit search in time" << std::endl;
+            }
         }
 
     } while (next_combination(indexes, assignedMsgIndex - 1));
