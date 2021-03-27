@@ -191,7 +191,7 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
             Link* link = r.Routs[routI][0];
             std::vector<std::pair<uint64_t, uint64_t>> tmp(countMsgs)
             for (size_t it = 0; it < countMsgs; it++) {
-                tmp[it].first = 0;
+                tmp[it].first = it * msg.T;
             }
             r.Times[link] = std::move(tmp);
 
@@ -210,9 +210,16 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
             if (r.Times.contains(link) {
                 continue;
             }
+
+            uint64_t numFrame = msg.Size / 1500;
+            if (msg.Size % 1500) {
+                numFrame += 1;
+            }
+            uint64_t C = std::ceil(((double) (numFrame - 1) * 42 + msg.Size - 1500) / (link->Bandwidth));
+
             std::vector<std::pair<uint64_t, uint64_t>> tmp(countMsgs)
             for (size_t it = 0; it < countMsgs; it++) {
-                tmp[it].first = r.Times[r.Routs[routI][pathI - 1]][it].second;
+                tmp[it].first = r.Times[r.Routs[routI][pathI - 1]][it].second - C;
             }
             r.Times[link] = std::move(tmp);
             
