@@ -11,16 +11,17 @@
 struct GCLNote {
     int NumQueue;
     uint64_t NumMsg;
-    uint64_t Offset;
+    double Offset;
 
-    uint64_t In;
-    uint64_t Out
+    double In;
+    double Out
 
-    GCLNote(int a = 0, uint64_t b = 0, uint64_t c = 0, uint64_t t1 = 0, uint64_t t2 = 0) : NumQueue(a), NumMsg(b), Offset(c), In(t1), Out(t2) {}
+    GCLNote(int a = 0, uint64_t b = 0, double c = 0, double t1 = 0, double t2 = 0) : NumQueue(a), NumMsg(b), Offset(c), In(t1), Out(t2) {}
 };
 
 struct GCL {
-    static uint64_t Period;
+    // DO NOT USE VERY BIG PERIOD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    static uint32_t Period;
 
     static double IdleSlopA;
     static double IdleSlopB;
@@ -32,19 +33,21 @@ struct GCL {
 
     static void SetPeriod(const std::vector<Message>& MSG);
 
-    bool addMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>>& time);
+    bool addMsg(const Message& msg, std::vector<std::pair<double, double>>& time);
 
-    bool addTTMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>>& time);
+    bool addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& time);
 
-    bool addAVBMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>>& time);
+    bool addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& time);
 
     void eraseMsg(const Message& msg); 
 
-    void freeQueue(const size_t& numQ, const uint64_t& from, const uint64_t& to);
+    void freeQueue(const size_t& numQ, const double& from, const double& to);
 
-    void lockQueue(const size_t& numQ, const uint64_t& from, const uint64_t& to);
+    void lockQueue(const size_t& numQ, const double& from, const double& to);
 
-    int getFirstFreeQueue(const Message& msg, const uint64_t& from, const uint64_t& to);
+    int getFirstFreeQueue(const Message& msg, const double& from, const double& to);
+
+    bool checkQueueFree(const size_t& numQ, const double& from, const double& to);
 
     GCL() {
         Link_ = nullptr;

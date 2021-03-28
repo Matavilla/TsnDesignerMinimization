@@ -24,35 +24,46 @@ void GCL::SetPeriod(const std::vector<Message>& MSG) {
     for (auto& i : MSG) {
         Period = lcm(Period, i.T);
     }
+    Period *= 1000; // in microseconds
 }
 
-void GCL::freeQueue(const size_t& numQ, const uint64_t& from, const uint64_t& to) {
+void GCL::freeQueue(const size_t& numQ, const double& from_, const double& to_) {
+    uint64_t from = std::round(from_ * 1000);
+    uint64_t to = std::round(to_ * 1000);
     for (uint64_t i = from; i < to; i++) {
         SchQueue[i] &= ~(1 << numQ);
     }
 }
 
-void GCL::lockQueue(const size_t& numQ, const uint64_t& from, const uint64_t& to) {
+void GCL::lockQueue(const size_t& numQ, const double& from_, const double& to_) {
+    uint64_t from = std::round(from_ * 1000);
+    uint64_t to = std::round(to_ * 1000);
     for (uint64_t i = from; i < to; i++) {
         SchQueue[i] |= (1 << numQ);
     }
 }
 
-int getFirstFreeQueue(const Message& msg, const uint64_t& from, const uint64_t& to) {
+bool GCL::checkQueueFree(const size_t& numQ, const double& from_, const double& to_) {
+    uint64_t from = std::round(from_ * 1000);
+    uint64_t to = std::round(to_ * 1000);
+    bool flag = true;
+    for (uint64_t j = from; j < to; j++) {
+        if (SchQueue[j] & (1 << numQ)) {
+            flag = false;
+            break;
+        }
+    }
+    return flag;
+}
+
+int GCL::getFirstFreeQueue(const Message& msg, const double& from_, const double& to_) {
     for (uint64_t i = 0; i < 6; i++) {
         if (msg.Type == TypeMsg::A) {
             i = 6;
         } else if (msg.Type == TypeMsg::B) {
             i = 7;
         } 
-        bool flag = false;
-        for (uint64_t j = from; j < to; j++) {
-            if (SchQueue[j] & (1 << i)) {
-                flag = true;
-                break;
-            }
-        }
-        if (!flag) {
+        if (checkQueueFree(i, from_, to_)) {
             return i;
         }
     }
@@ -71,7 +82,7 @@ void GCL::eraseMsg(const Message& msg) {
     }
 }
 
-bool GCL::addMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>>& time) {
+bool GCL::addMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
     if (msg.Type == TypeMsg::TT) {
         return addTTMsg(msg, time);
     } else {
@@ -80,17 +91,17 @@ bool GCL::addMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>>&
 }
 
 // need Network Calculus work
-bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>>& time) {
+bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
     uint64_t numFrame = std::ceil(msg.Size / 1500.0);
-    uint64_t timeForTransfer = std::ceil(((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth));
-    uint64_t timeGB = std::ceil(1500 / Link_->Bandwidth);
+    double timeForTransfer = ((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth);
+    double timeGB = 1542 / Link_->Bandwidth;
 
     double idleSlop = (msg.Type == TypeMsg::A) ? IdleSlopA : IdleSlopB;
+    int numQueue = (msg.Type == TypeMsg::A) ? 6 : 7;
 
     idleSlop *= Link_->Bandwidth;
     double sendSlop = Link_->Bandwidth - idleSlop;
 
-    double credit = 0.0;
     bool flag = Sch.empty();
     for (auto& itTime : time) {
         uint64_t tIn = itTime.first;
@@ -98,77 +109,149 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t
         tOut = timeForTransfer;
 
         if (flag) {
-            Sch.emplace_back(numQ, msg.Num, timeForTransfer, tIn);
             tOut += tIn;
+            numQ = getFirstFreeQueue(msg, tIn, tOut);
+            if (numQ == -1) {
+                return false;
+            }
+            Sch.emplace_back(numQ, msg.Num, tIn, tIn, tOut);
+            lockQueue(numQ, tIn, tOut);
             continue;
         }
-
+        
+        double credit = 0.0;
+        uint64_t prevEnd = 0;
         for (auto it = Sch.begin(); it != Sch.end();) {
-            uint64_t start = it->Offset;
-            uint64_t end = start + it->Dur;
+            double start = it->Offset;
+            double end = it->Out;
             if (end <= tIn) {
-                if (it->NumQueue > 5) {
-                    // change credit
+                if (it->NumQueue < 6 && prevEnd <= (start - timeGB)) {
+                    double delta = (start - timeGB - prevEnd) * idleSlop;
+                    if (checkQueueFree(numQueue, prevEnd, start - timeGB)) {
+                        credit += delta;
+                    } else if (credit < 0 && (credit + delta) < 0) {
+                        credit += delta;
+                    } else if (credit < 0 && (credit + delta) >= 0) {
+                        credit = 0;
+                    }
+                } else {
                     credit += (start - prevEnd) * idleSlop;
-                    credit -= it->Dur * sendSlop;
-                } else if (prevTime < (((int64_t) start) - timeGB)) {
-                    credit += (start - timeGB - prevEnd) * idleSlop;
+                    if (it->NumQueue == numQueue) {
+                        credit -= (end - start) * sendSlop;
+                    } else if (checkQueueFree(numQueue, start, end)) {
+                        credit += (end - start) * idleSlop;
+                    }
                 }
                 it++;
                 prevEnd = end;
             } else {
-                if ((tIn + timeForTransfer) <= start) {
-                    // вставляем в интервал, все круто.
-                    GCLNote tmp(numQ, msg.Num, timeForTransfer, tIn);
-                    tOut += tIn;
-                    Sch.insert(it, std::move(tmp));
-                } else {
-                    if (it->NumQueue > 5) {
-                        return false;
-                    }
-                    it++;
-                    bool endQueue = false;
-                    while (it != Sch.end() && (it->Offset - end) < timeForTransfer) {
-                        if (it->NumQueue == 5) {
-                            endQueue = true;
-                            break;
+                credit += (tIn - prevEnd) * idleSlop;
+                double waitTime = 0;
+                if (credit < 0) {
+                    waitTime = (-credit) / (idleSlop);
+                }
+
+                if (it->NumQueue == numQueue) {
+                    eraseMsg(msg);
+                    return false;
+                }
+                while (it != Sch.end()) {
+                    double freeTime = it->Offset - prevEnd;
+                    if (it->NumQueue < 6) {
+                        freeTime -= timeGB;
+                        if (freeTime < 0) {
+                            freeTime = 0;
                         }
-                        end = it->Offset + it->Dur;
-                        numQ = std::max(numQ, it->NumQueue);
-                        it++;
+                    }
+                    if (waitTime > 0.0001) { // > 0
+                        if (waitTime - freeTime < 0.0001) {
+                            freeTime -= waitTime;
+                            waitTime = 0;
+                        } else {
+                            waitTime -= freeTime;
+                            freeTime = 0;
+                        }
                     }
 
-                    GCLNote tmp(numQ + 1, msg.Num, timeForTransfer, end);
-                    tOut += end;
-
-                    if (it == Sch.end()) {
-                        if ((Period - end) < timeForTransfer) {
+                    if (waitTime < 0.0001 && it->NumQueue < 6) {
+                        freeTime += timeGB;
+                    }
+                    if (freeTime >= timeForTransfer) {
+                        tOut += it->Offset - freeTime;
+                        if (!checkQueueFree(numQueue, tIn, tOut)) {
+                            eraseMsg(msg);
                             return false;
                         }
-                        Sch.push_back(std::move(tmp));
-                    } else {
-                        if (endQueue) {
-                            // нет пустого промежутка до конца очереди
-                            return false;
-                        }
+                        GCLNote tmp(numQueue, msg.Num, it->Offset - freeTime, tIn, tOut);
+                        lockQueue(numQ, tIn, tOut);
                         Sch.insert(it, std::move(tmp));
+                        break;
+                    }
+                    prevEnd = it->Out;
+                    it++;
+                }
+
+                if (it == Sch.end()) {
+                    if ((Period - prevEnd) < (timeForTransfer + waitTime)) {
+                        eraseMsg(msg);
+                        return false;
+                    } else {
+                        tOut += prevEnd + waitTime;
+                        if (!checkQueueFree(numQueue, tIn, tOut)) {
+                            eraseMsg(msg);
+                            return false;
+                        }
+                        GCLNote tmp(numQueue, msg.Num, prevEnd + waitTime, tIn, tOut);
+                        lockQueue(numQ, tIn, tOut);
+                        Sch.push_back(std::move(tmp));
                     }
                 }
                 break;
             }
         }
+
+        // check credit for all messages on this queue
+        prevEnd = 0;
+        credit = 0.0;
+        for (auto it = Sch.begin(); it != Sch.end();) {
+            double start = it->Offset;
+            double end = it->Out;
+            if (it->NumQueue < 6 && prevEnd <= (start - timeGB)) {
+                double delta = (start - timeGB - prevEnd) * idleSlop;
+                if (checkQueueFree(numQueue, prevEnd, start - timeGB)) {
+                    credit += delta;
+                } else if (credit < 0 && (credit + delta) < 0) {
+                    credit += delta;
+                } else if (credit < 0 && (credit + delta) >= 0) {
+                    credit = 0;
+                }
+            } else {
+                credit += (start - prevEnd) * idleSlop;
+                if (it->NumQueue == numQueue) {
+                    if (credit < 0) {
+                        eraseMsg(msg);
+                        return false;
+                    }
+                    credit -= (it->Out - it->Offset) * sendSlop;
+                } else if (checkQueueFree(numQueue, it->Offset, it->Out)) {
+                    credit += (it->Out - start) * idleSlop;
+                }
+            }
+            it++;
+            prevEnd = end;
+        }
     }
     return true;
 }
 
-bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>>& time) {
+bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
     uint64_t numFrame = std::ceil(msg.Size / 1500.0);
-    uint64_t timeForTransfer = std::ceil(((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth));
+    double timeForTransfer = ((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth);
 
     bool flag = Sch.empty();
     for (auto& itTime : time) {
-        uint64_t tIn = itTime.first;
-        uint64_t& tOut = itTime.second;
+        double tIn = itTime.first;
+        double& tOut = itTime.second;
         tOut = timeForTransfer;
         if (flag) {
             tOut += tIn;
@@ -178,8 +261,8 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>
         }
 
         for (auto it = Sch.begin(); it != Sch.end();) {
-            uint64_t start = it->Offset;
-            uint64_t end = it->Out;
+            double start = it->Offset;
+            double end = it->Out;
             if (end <= tIn) {
                 it++;
             } else {
@@ -188,6 +271,7 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>
                     tOut += tIn;
                     int numQ = getFirstFreeQueue(msg, tIn, tOut);
                     if (numQ == -1) {
+                        eraseMsg(msg);
                         return false;
                     }
                     GCLNote tmp(numQ, msg.Num, tIn, tIn, tOut);
@@ -201,12 +285,14 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<uint64_t, uint64_t>
                     }
 
                     if (it == Sch.end() && (Period - end) < timeForTransfer) {
+                        eraseMsg(msg);
                         return false;
                     }
 
                     tOut += end;
                     int numQ = getFirstFreeQueue(msg, tIn, tOut);
                     if (numQ == -1) {
+                        eraseMsg(msg);
                         return false;
                     }
                     GCLNote tmp(numQ, msg.Num, end, tIn, tOut);

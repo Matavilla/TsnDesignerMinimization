@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <cmath>
 
 #include "Scheduler.h"
 #include "GCL.h"
@@ -189,7 +190,7 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
     for (size_t routI = 0; routI < r.Routs.size(); routI++) {
         {
             Link* link = r.Routs[routI][0];
-            std::vector<std::pair<uint64_t, uint64_t>> tmp(countMsgs)
+            std::vector<std::pair<double, double>> tmp(countMsgs)
             for (size_t it = 0; it < countMsgs; it++) {
                 tmp[it].first = it * msg.T;
             }
@@ -211,11 +212,8 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
                 continue;
             }
 
-            uint64_t numFrame = msg.Size / 1500;
-            if (msg.Size % 1500) {
-                numFrame += 1;
-            }
-            uint64_t C = std::ceil(((double) (numFrame - 1) * 42 + msg.Size - 1500) / (link->Bandwidth));
+            uint64_t numFrame = std::ceil(msg.Size / 1500);
+            uint64_t C = ((double) (numFrame - 1) * 42 + msg.Size - 1500) / (link->Bandwidth);
 
             std::vector<std::pair<uint64_t, uint64_t>> tmp(countMsgs)
             for (size_t it = 0; it < countMsgs; it++) {
