@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-uint64_t GCL::Period = 1;
+uint32_t GCL::Period = 1;
 double GCL::IdleSlopA = 0.65;
 double GCL::IdleSlopB = 0.35;
 
@@ -114,8 +114,8 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                 eraseMsg(msg);
                 return false;
             }
-            Sch.emplace_back(numQ, msg.Num, tIn, tIn, tOut);
-            lockQueue(numQ, tIn, tOut);
+            Sch.emplace_back(numQueue, msg.Num, tIn, tIn, tOut);
+            lockQueue(numQueue, tIn, tOut);
             continue;
         }
         
@@ -185,7 +185,7 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                             return false;
                         }
                         GCLNote tmp(numQueue, msg.Num, it->Offset - freeTime, tIn, tOut);
-                        lockQueue(numQ, tIn, tOut);
+                        lockQueue(numQueue, tIn, tOut);
                         Sch.insert(it, std::move(tmp));
                         break;
                     }
@@ -204,7 +204,7 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                             return false;
                         }
                         GCLNote tmp(numQueue, msg.Num, prevEnd + waitTime, tIn, tOut);
-                        lockQueue(numQ, tIn, tOut);
+                        lockQueue(numQueue, tIn, tOut);
                         Sch.push_back(std::move(tmp));
                     }
                 }

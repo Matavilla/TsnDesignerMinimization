@@ -20,7 +20,7 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
         for (auto& i : prev) i = -2;
         
         for (auto& i : sender.ConnectedLinks) {
-            d[i->To->Num] = (!rout.UsedLinks.contains(i.get())) ? i->weight() : 0;
+            d[i->To->Num] = (!rout.UsedLinks.contains(i)) ? i->weight() : 0;
             prev[i->To->Num] = -1; // prev = ES
         }
         
@@ -66,7 +66,7 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
                     }
                     continue;
                 }
-                double len = (!rout.UsedLinks.contains(k.get())) ? k->weight() : 0;
+                double len = (!rout.UsedLinks.contains(k)) ? k->weight() : 0;
                 if (d[v] + len < d[k->To->Num]) {
                     d[k->To->Num] = d[v] + len;
                     prev[k->To->Num] = v;

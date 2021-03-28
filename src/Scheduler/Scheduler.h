@@ -18,13 +18,13 @@ class Scheduler {
 
     bool tryFoundBypass(Link* link, Message& msg, Paths& rout, size_t deep);
 
-    bool limitedSearch(int index, std::list<Paths>& r, size_t subSetSize = 2);
+    bool limitedSearch(int index, std::vector<Paths>& r, size_t subSetSize = 2);
 
-    bool tryBypassSwitchWithBuff(int index, std::list<Paths>& r, size_t subSetSize = 2);
+    bool tryBypassSwitchWithBuff(int index, std::vector<Paths>& r, size_t subSetSize = 2);
 
-    bool checkTime(Message& msg, Path& r);
+    bool checkTime(Message& msg, Paths& r);
 
-    void deleteMsg(Message& msg, Path& r);
+    void deleteMsg(Message& msg, Paths& r);
 
     bool assignedMsg(Message& msg, Paths& rout, size_t deep = 0, bool flagBypass = true);
 public:
@@ -32,5 +32,5 @@ public:
     
     void run();
 
-    void printAns() const
+    void printAns() const;
 };

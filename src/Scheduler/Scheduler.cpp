@@ -2,6 +2,7 @@
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <iterator>
 
 #include "Scheduler.h"
 #include "GCL.h"
@@ -16,6 +17,20 @@ int comp(const Message& a, const Message& b) {
     } else {
         return a.Type < b.Type;
     }
+}
+
+bool next_combination(std::vector<int>& a, int n) {
+    int k = a.size();
+    for (int i = k - 1; i >= 0; --i) {
+        if (a[i] < n - k + i + 1) {
+            ++a[i];
+            for (int j = i + 1; j < k; ++j) {
+                a[j] = a[j - 1] + 1;
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 Scheduler::Scheduler(const std::string& dataPath) : RoutFunc(new RoutingDijkstra) {
@@ -40,7 +55,7 @@ Scheduler::Scheduler(const std::string& dataPath) : RoutFunc(new RoutingDijkstra
 
 
 void Scheduler::run() {
-    std::list<Paths> routes;
+    std::vector<Paths> routes;
     for (int i = 0; i < MSG.size(); i++) {
         if (!(*RoutFunc) (G, MSG[i], routes[i])) {
             routes.erase(routes.begin() + i);
@@ -85,8 +100,8 @@ void Scheduler::run() {
     printAns();
 }
 
-bool Scheduler::checkTime(Message& msg, Path& r) {
-    for (auto& p : r) {
+bool Scheduler::checkTime(Message& msg, Paths& r) {
+    for (auto& p : r.Routs) {
         for (auto& it : r.Times[p.back()]) {
             if (it.second > msg.MaxDur) {
                 return false;
@@ -96,8 +111,8 @@ bool Scheduler::checkTime(Message& msg, Path& r) {
     return true;
 }
 
-void Scheduler::deleteMsg(Message& msg, Path& r) {
-    for (auto& it : r.UsedLinks) {
+void Scheduler::deleteMsg(Message& msg, Paths& r) {
+    for (auto& link : r.UsedLinks) {
         if (dynamic_cast<EndSystem*>(link->From)) {
             dynamic_cast<EndSystem*>(link->From)->PortGCL[link].eraseMsg(msg);
         } else {
@@ -107,12 +122,12 @@ void Scheduler::deleteMsg(Message& msg, Path& r) {
     r.Times.clear();
 }
 
-bool Scheduler::tryBypassSwitchWithBuff(int index, std::list<Paths>& routes, size_t subSetSize) {
+bool Scheduler::tryBypassSwitchWithBuff(int index, std::vector<Paths>& routes, size_t subSetSize) {
     Message& msg = MSG[index];
-    Paths& r = routes[i];
+    Paths& r = routes[index];
 
     size_t n = r.UsedLinks.size();
-    std::vector<size_t> indexes(subSetSize);
+    std::vector<int> indexes(subSetSize);
     for (size_t i = 0; i < subSetSize; i++) indexes[i] = i;
 
     deleteMsg(msg, r);
@@ -122,8 +137,10 @@ bool Scheduler::tryBypassSwitchWithBuff(int index, std::list<Paths>& routes, siz
         {
             size_t j = 0;
             for (auto& i : indexes) {
-                prevLength[j] = (r.UsedLinks.begin() + i)->Length;
-                (r.UsedLinks.begin() + i)->Length = std::numeric_limits<int>::max();
+                auto tmp = r.UsedLinks.begin();
+                std::advance(tmp, i);
+                prevLength[j] = (*tmp)->Length;
+                (*tmp)->Length = std::numeric_limits<int>::max();
                 j++;
             }
         }
@@ -152,7 +169,9 @@ bool Scheduler::tryBypassSwitchWithBuff(int index, std::list<Paths>& routes, siz
         {
             size_t j = 0;
             for (auto& i : indexes) {
-                (r.UsedLinks.begin() + i)->Length = prevLength[j];
+                auto tmp = r.UsedLinks.begin();
+                std::advance(tmp, i);
+                (*tmp)->Length = prevLength[j];
                 j++;
             }
         }
@@ -182,7 +201,7 @@ bool Scheduler::tryFoundBypass(Link* link, Message& msg, Paths& r, size_t deep) 
 }
 
 bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass) {
-    if (deep = 5) {
+    if (deep == 5) {
         return false;
     }
 
@@ -190,15 +209,15 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
     for (size_t routI = 0; routI < r.Routs.size(); routI++) {
         {
             Link* link = r.Routs[routI][0];
-            std::vector<std::pair<double, double>> tmp(countMsgs)
+            std::vector<std::pair<double, double>> tmp(countMsgs);
             for (size_t it = 0; it < countMsgs; it++) {
                 tmp[it].first = it * msg.T;
             }
             r.Times[link] = std::move(tmp);
 
-            EnsSystem* es = dynamic_cast<EndSystem*>(link->From);
+            EndSystem* es = dynamic_cast<EndSystem*>(link->From);
 
-            if (!es->PortGCL[link].addMsg(msg, r.Times[link]) {
+            if (!es->PortGCL[link].addMsg(msg, r.Times[link])) {
                 // все плохо
                 if (flagBypass) {
                     return tryFoundBypass(link, msg, r, deep);
@@ -208,14 +227,14 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
         }
         for (size_t pathI = 1; pathI < r.Routs[routI].size(); pathI++) {
             Link* link = r.Routs[routI][pathI];
-            if (r.Times.contains(link) {
+            if (r.Times.contains(link)) {
                 continue;
             }
 
             uint64_t numFrame = std::ceil(msg.Size / 1500);
-            uint64_t C = ((double) (numFrame - 1) * 42 + msg.Size - 1500) / (link->Bandwidth);
+            double C = ((double) (numFrame - 1) * 42 + msg.Size - 1500) / (link->Bandwidth);
 
-            std::vector<std::pair<uint64_t, uint64_t>> tmp(countMsgs)
+            std::vector<std::pair<double, double>> tmp(countMsgs);
             for (size_t it = 0; it < countMsgs; it++) {
                 tmp[it].first = r.Times[r.Routs[routI][pathI - 1]][it].second - C;
             }
@@ -223,7 +242,7 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
             
             Switch* sw = dynamic_cast<Switch*>(link->From);
 
-            if (!sw->PortGCL[link].addMsg(msg, r.Times[link]) {
+            if (!sw->PortGCL[link].addMsg(msg, r.Times[link])) {
                 // все плохо
                 deleteMsg(msg, r);
 
@@ -237,22 +256,8 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
     return true;
 }
 
-bool next_combination(std::vector<int>& a, int n) {
-    int k = a.size();
-    for (int i = k - 1; i >= 0; --i) {
-        if (a[i] < n - k + i + 1) {
-            ++a[i];
-            for (int j = i + 1; j < k; ++j) {
-                a[j] = a[j - 1] + 1;
-            }
-            return true;
-        }
-    }
-    return false;
-}
-
-bool Scheduler::limitedSearch(int assignedMsgIndex, std::list<Paths>& routes, size_t subSetSize) {
-    std::vector<size_t> indexes(subSetSize);
+bool Scheduler::limitedSearch(int assignedMsgIndex, std::vector<Paths>& routes, size_t subSetSize) {
+    std::vector<int> indexes(subSetSize);
     for (size_t i = 0; i < subSetSize; i++) indexes[i] = i;
 
     do {
@@ -269,7 +274,7 @@ bool Scheduler::limitedSearch(int assignedMsgIndex, std::list<Paths>& routes, si
                     break;
                 }
 
-                if (!checkTime(MSG[i], routes[i]) {
+                if (!checkTime(MSG[i], routes[i])) {
                     flag = true;
                     break;
                 }
@@ -292,7 +297,7 @@ bool Scheduler::limitedSearch(int assignedMsgIndex, std::list<Paths>& routes, si
                 std::cout << "it's not correct limit search" << std::endl;
             }
 
-            if (!checkTime(MSG[i], routes[i]) {
+            if (!checkTime(MSG[i], routes[i])) {
                 std::cout << "it's not correct limit search in time" << std::endl;
             }
         }

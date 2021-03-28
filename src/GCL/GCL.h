@@ -8,13 +8,15 @@
 #include "Message.h"
 #include "Network.h"
 
+struct Link;
+
 struct GCLNote {
     int NumQueue;
     uint64_t NumMsg;
     double Offset;
 
     double In;
-    double Out
+    double Out;
 
     GCLNote(int a = 0, uint64_t b = 0, double c = 0, double t1 = 0, double t2 = 0) : NumQueue(a), NumMsg(b), Offset(c), In(t1), Out(t2) {}
 };

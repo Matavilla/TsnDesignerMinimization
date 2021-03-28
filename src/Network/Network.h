@@ -15,6 +15,8 @@ enum class NetElemType {
     SWITCH
 };
 
+struct GCL;
+
 struct NetElem {
     NetElemType Type;
     int Num;
@@ -38,7 +40,7 @@ struct Link : public NetElem {
     }
 };
 
-struct EndSystem :public NetElem {
+struct EndSystem : public NetElem {
     std::vector<Message*> Msg; // fill
     std::vector<Link*> ConnectedLinks;
     std::map<Link*, GCL> PortGCL;

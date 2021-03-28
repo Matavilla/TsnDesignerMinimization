@@ -9,10 +9,13 @@
 #include "Network.h"
 #include "Message.h"
 
+struct Link;
+struct Network;
+
 struct Paths {
     std::vector<std::vector<Link*>> Routs;
     std::set<Link*> UsedLinks;
-    std::map<Link*, std::vector<std::pair<uint64_t, uint64_t>>> Times;
+    std::map<Link*, std::vector<std::pair<double, double>>> Times;
 };
 
 class RoutingBase {
