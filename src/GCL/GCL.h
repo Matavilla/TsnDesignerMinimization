@@ -41,6 +41,8 @@ struct GCL {
 
     bool addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& time);
 
+    bool checkAVB();
+
     void eraseMsg(const Message& msg); 
 
     void freeQueue(const size_t& numQ, const double& from, const double& to);

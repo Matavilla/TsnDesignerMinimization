@@ -82,6 +82,45 @@ void GCL::eraseMsg(const Message& msg) {
     }
 }
 
+bool GCL::checkAVB() {
+    for (size_t numQueue = 6; numQueue < 8; numQueue++) {
+        double prevEnd = 0.0;
+        double credit = 0.0;
+        double idleSlop = (msg.Type == TypeMsg::A) ? IdleSlopA : IdleSlopB;
+        idleSlop *= Link_->Bandwidth;
+        double sendSlop = Link_->Bandwidth - idleSlop;
+        for (auto it = Sch.begin(); it != Sch.end();) {
+            double start = it->Offset;
+            double end = it->Out;
+            if (it->NumQueue < 6) {
+                if (prevEnd <= (start - timeGB)) {
+                    double delta = (start - timeGB - prevEnd) * idleSlop;
+                    if (checkQueueFree(numQueue, prevEnd, start - timeGB)) {
+                        credit += delta;
+                    } else if (credit < 0 && (credit + delta) < 0) {
+                        credit += delta;
+                    } else if (credit < 0 && (credit + delta) >= 0) {
+                        credit = 0;
+                    }
+                }
+            } else {
+                credit += (start - prevEnd) * idleSlop;
+                if (it->NumQueue == numQueue) {
+                    if (credit < 0) {
+                        return false;
+                    }
+                    credit -= (it->Out - it->Offset) * sendSlop;
+                } else if (checkQueueFree(numQueue, it->Offset, it->Out)) {
+                    credit += (it->Out - start) * idleSlop;
+                }
+            }
+            it++;
+            prevEnd = end;
+        }
+    }
+    return true;
+}
+
 bool GCL::addMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
     if (msg.Type == TypeMsg::TT) {
         return addTTMsg(msg, time);
@@ -213,36 +252,9 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
         }
 
         // check credit for all messages on this queue
-        prevEnd = 0;
-        credit = 0.0;
-        for (auto it = Sch.begin(); it != Sch.end();) {
-            double start = it->Offset;
-            double end = it->Out;
-            if (it->NumQueue < 6) {
-                if (prevEnd <= (start - timeGB)) {
-                    double delta = (start - timeGB - prevEnd) * idleSlop;
-                    if (checkQueueFree(numQueue, prevEnd, start - timeGB)) {
-                        credit += delta;
-                    } else if (credit < 0 && (credit + delta) < 0) {
-                        credit += delta;
-                    } else if (credit < 0 && (credit + delta) >= 0) {
-                        credit = 0;
-                    }
-                }
-            } else {
-                credit += (start - prevEnd) * idleSlop;
-                if (it->NumQueue == numQueue) {
-                    if (credit < 0) {
-                        eraseMsg(msg);
-                        return false;
-                    }
-                    credit -= (it->Out - it->Offset) * sendSlop;
-                } else if (checkQueueFree(numQueue, it->Offset, it->Out)) {
-                    credit += (it->Out - start) * idleSlop;
-                }
-            }
-            it++;
-            prevEnd = end;
+        if (!checkAVB()) {
+            eraseMsg(msg);
+            return false;
         }
     }
     return true;
@@ -311,6 +323,10 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& t
                 break;
             }
         }
+    }
+    if (!checkAVB()) {
+        eraseMsg(msg);
+        return false;
     }
     return true;
 }
