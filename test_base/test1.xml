@@ -1,0 +1,22 @@
+<Msg>
+    <Type>     </Type>
+    <T>        </T>
+    <Size>     </Size>
+    <MaxDur>   </MaxDur>
+</Msg>
+<ESCount>     </ESCount>
+<SwitchCount> </SwitchCount>
+<LinkCount>   </LinkCount>
+
+<Link>
+    <Length>       </Length>
+    <Bandwidth>    </Bandwidth>
+    <From ES>      </From ES>
+    <To >          </To >
+</Link>
+
+<ES>
+    <Sender for MSG>      </Sender for MSG>
+    <Receiver for MSG>    </Receiver for MSG>
+
+</ES>

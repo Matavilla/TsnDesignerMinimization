@@ -72,8 +72,7 @@ void Network::init(tinyxml2::XMLElement* config, std::vector<Message>& msgs) {
         }
     }
 
-    iter = config->FirstChildElement("Switch");
-    for (size_t i = 0; iter != nullptr; i++, iter = iter->NextSiblingElement("Switch")) {
+    for (size_t i = 0; i < Switchs.size(); i++) {
         Switchs[i].Num = i;
     }
 }
