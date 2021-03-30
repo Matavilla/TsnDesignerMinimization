@@ -1,9 +1,6 @@
-<Msg>
-    <Type>     </Type>
-    <T>        </T>
-    <Size>     </Size>
-    <MaxDur>   </MaxDur>
-</Msg>
+<Msg><Type></Type><T></T><Size></Size><MaxDur></MaxDur></Msg>
+<Msg><Type></Type><T></T><Size></Size><MaxDur></MaxDur></Msg>
+
 <ESCount>     </ESCount>
 <SwitchCount> </SwitchCount>
 <LinkCount>   </LinkCount>

@@ -53,8 +53,8 @@ struct GCL {
 
     bool checkQueueFree(const size_t& numQ, const double& from, const double& to);
 
-    GCL() {
-        Link_ = nullptr;
-        SchQueue.resize(Period);
+    GCL(Link* l = nullptr) {
+        Link_ = l;
+        SchQueue.resize(Period * 1000);
     }
 };

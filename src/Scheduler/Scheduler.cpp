@@ -55,7 +55,7 @@ Scheduler::Scheduler(const std::string& dataPath) : RoutFunc(new RoutingDijkstra
 
 
 void Scheduler::run() {
-    std::vector<Paths> routes;
+    std::vector<Paths> routes(MSG.size());
     for (int i = 0; i < MSG.size(); i++) {
         if (!(*RoutFunc) (G, MSG[i], routes[i])) {
             routes.erase(routes.begin() + i);
@@ -209,20 +209,22 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
     for (size_t routI = 0; routI < r.Routs.size(); routI++) {
         {
             Link* link = r.Routs[routI][0];
-            std::vector<std::pair<double, double>> tmp(countMsgs);
-            for (size_t it = 0; it < countMsgs; it++) {
-                tmp[it].first = it * msg.T;
-            }
-            r.Times[link] = std::move(tmp);
-
-            EndSystem* es = dynamic_cast<EndSystem*>(link->From);
-
-            if (!es->PortGCL[link].addMsg(msg, r.Times[link])) {
-                // все плохо
-                if (flagBypass) {
-                    return tryFoundBypass(link, msg, r, deep);
+            if (!r.Times.contains(link)) {
+                std::vector<std::pair<double, double>> tmp(countMsgs);
+                for (size_t it = 0; it < countMsgs; it++) {
+                    tmp[it].first = it * msg.T;
                 }
-                return false;
+                r.Times[link] = std::move(tmp);
+
+                EndSystem* es = dynamic_cast<EndSystem*>(link->From);
+
+                if (!es->PortGCL[link].addMsg(msg, r.Times[link])) {
+                    // все плохо
+                    if (flagBypass) {
+                        return tryFoundBypass(link, msg, r, deep);
+                    }
+                    return false;
+                }
             }
         }
         for (size_t pathI = 1; pathI < r.Routs[routI].size(); pathI++) {

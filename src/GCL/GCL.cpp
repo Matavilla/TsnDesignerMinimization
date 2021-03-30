@@ -24,7 +24,6 @@ void GCL::SetPeriod(const std::vector<Message>& MSG) {
     for (auto& i : MSG) {
         Period = lcm(Period, i.T);
     }
-    Period *= 1000; // in microseconds
 }
 
 void GCL::freeQueue(const size_t& numQ, const double& from_, const double& to_) {
@@ -86,7 +85,8 @@ bool GCL::checkAVB() {
     for (size_t numQueue = 6; numQueue < 8; numQueue++) {
         double prevEnd = 0.0;
         double credit = 0.0;
-        double idleSlop = (msg.Type == TypeMsg::A) ? IdleSlopA : IdleSlopB;
+        double timeGB = 1542 / Link_->Bandwidth;
+        double idleSlop = (numQueue == 6) ? IdleSlopA : IdleSlopB;
         idleSlop *= Link_->Bandwidth;
         double sendSlop = Link_->Bandwidth - idleSlop;
         for (auto it = Sch.begin(); it != Sch.end();) {

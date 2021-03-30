@@ -10,11 +10,11 @@ void Network::init(tinyxml2::XMLElement* config, std::vector<Message>& msgs) {
         iter->QueryIntText(&tmp);
         EndSystems.resize(tmp);
 
-        iter = config->FirstChildElement("LinkCount");
+        iter = config->FirstChildElement("LCount");
         iter->QueryIntText(&tmp);
         Links.resize(tmp);
 
-        iter = config->FirstChildElement("SwitchCount");
+        iter = config->FirstChildElement("SWCount");
         iter->QueryIntText(&tmp);
         Switchs.resize(tmp);
     }
@@ -26,27 +26,31 @@ void Network::init(tinyxml2::XMLElement* config, std::vector<Message>& msgs) {
         iter->FirstChildElement("Bandwidth")->QueryIntText(&Links[i].Bandwidth);
 
         int tmp;
-        XMLElement* iter2 = iter->FirstChildElement("From ES");
+        XMLElement* iter2 = iter->FirstChildElement("FromES");
         if (iter2) {
             iter2->QueryIntText(&tmp);
+            tmp -= 1;
             EndSystems[tmp].ConnectedLinks.emplace_back(&Links[i]);
-            EndSystems[tmp].PortGCL[&Links[i]] = GCL(); 
+            EndSystems[tmp].PortGCL[&Links[i]] = std::move(GCL(&Links[i])); 
             Links[i].From = &EndSystems[tmp];
         } else {
-            iter2 = iter->FirstChildElement("From Switch");
+            iter2 = iter->FirstChildElement("FromSW");
             iter2->QueryIntText(&tmp);
+            tmp -= 1;
             Switchs[tmp].ConnectedLinks.emplace_back(&Links[i]);
-            Switchs[tmp].PortGCL[&Links[i]] = GCL();
+            Switchs[tmp].PortGCL[&Links[i]] = std::move(GCL(&Links[i]));
             Links[i].From = &Switchs[tmp];
         }
 
-        iter2 = iter->FirstChildElement("To ES");
+        iter2 = iter->FirstChildElement("ToES");
         if (iter2) {
             iter2->QueryIntText(&tmp);
+            tmp -= 1;
             Links[i].To = &EndSystems[tmp];
         } else {
-            iter2 = iter->FirstChildElement("To Switch");
+            iter2 = iter->FirstChildElement("ToSW");
             iter2->QueryIntText(&tmp);
+            tmp -= 1;
             Links[i].To = &Switchs[tmp];
         }
 
@@ -58,16 +62,18 @@ void Network::init(tinyxml2::XMLElement* config, std::vector<Message>& msgs) {
         EndSystems[i].Num = i;
         int tmp;
 
-        XMLElement* iter2 = iter->FirstChildElement("Sender for MSG");
-        for (; iter2 != nullptr; iter2 = iter2->NextSiblingElement("Sender for MSG")) {
+        XMLElement* iter2 = iter->FirstChildElement("SenderMSG");
+        for (; iter2 != nullptr; iter2 = iter2->NextSiblingElement("SenderMSG")) {
             iter2->QueryIntText(&tmp);
+            tmp -= 1;
             EndSystems[i].Msg.emplace_back(&msgs[tmp]);
             msgs[tmp].Sender = i;
         }
 
-        iter2 = iter->FirstChildElement("Receiver for MSG");
-        for (; iter2 != nullptr; iter2 = iter2->NextSiblingElement("Receiver for MSG")) {
+        iter2 = iter->FirstChildElement("ReceiverMSG");
+        for (; iter2 != nullptr; iter2 = iter2->NextSiblingElement("ReceiverMSG")) {
             iter2->QueryIntText(&tmp);
+            tmp -= 1;
             msgs[tmp].Receivers.insert(i);
         }
     }
