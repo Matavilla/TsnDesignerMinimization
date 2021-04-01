@@ -122,6 +122,9 @@ bool GCL::checkAVB() {
 }
 
 bool GCL::addMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
+    if (Link_->From->Type == NetElemType::ES) {
+        return addInES(msg, time);
+    }
     if (msg.Type == TypeMsg::TT) {
         return addTTMsg(msg, time);
     } else {
@@ -329,4 +332,56 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& t
         return false;
     }
     return true;
+}
+
+bool GCL::addInEs(const Message& msg, std::vector<std::pair<double, double>>& time) {
+    uint64_t numFrame = std::ceil(msg.Size / 1500.0);
+    double timeForTransfer = ((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth);
+
+    bool flag = Sch.empty();
+    for (auto& itTime : time) {
+        double& tIn = itTime.first;
+        double& tOut = itTime.second;
+        tOut = timeForTransfer;
+        if (flag) {
+            tOut += tIn;
+            Sch.emplace_back(0, msg.Num, tIn, tIn, tOut);
+            continue;
+        }
+        for (auto it = Sch.begin(); it != Sch.end();) {
+            double start = it->Offset;
+            double end = it->Out;
+            if (end <= tIn) {
+                it++;
+            } else {
+                if ((tIn + timeForTransfer) <= start) {
+                    // вставляем в интервал, все круто.
+                    tOut += tIn;
+                    GCLNote tmp(0, msg.Num, tIn, tIn, tOut);
+                } else {
+                    it++;
+                    while (it != Sch.end() && (it->Offset - end) < timeForTransfer) {
+                        end = it->Out;
+                        it++;
+                    }
+
+                    if (it == Sch.end() && (Period - end) < timeForTransfer) {
+                        eraseMsg(msg);
+                        return false;
+                    }
+
+                    tOut += end;
+                    tIn = end;
+                    GCLNote tmp(0, msg.Num, end, tIn, tOut);
+
+                    if (it == Sch.end()) {
+                        Sch.push_back(std::move(tmp));
+                    } else {
+                        Sch.insert(it, std::move(tmp));
+                    }
+                }
+                break;
+            }
+        }
+    }
 }
