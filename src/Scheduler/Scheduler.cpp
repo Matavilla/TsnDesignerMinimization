@@ -102,8 +102,10 @@ void Scheduler::run() {
 
 bool Scheduler::checkTime(Message& msg, Paths& r) {
     for (auto& p : r.Routs) {
-        for (auto& it : r.Times[p.back()]) {
-            if (it.second > msg.MaxDur) {
+        for (size_t i = 0; i < r.Times[p.back()].size(); i++) {
+            double end = r.Times[p.back()][i].second;
+            double start = r.Times[p.front()][i].first;
+            if ((end - start) > msg.MaxDur) {
                 return false;
             }
         }
@@ -234,7 +236,7 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
             }
 
             uint64_t numFrame = std::ceil(msg.Size / 1500);
-            double C = ((double) (numFrame - 1) * 42 + msg.Size - 1500) / (link->Bandwidth);
+            double C = ((double) (numFrame - 1) * 42 + msg.Size - 1500) / (r.Routs[routI][pathI - 1]->Bandwidth);
 
             std::vector<std::pair<double, double>> tmp(countMsgs);
             for (size_t it = 0; it < countMsgs; it++) {

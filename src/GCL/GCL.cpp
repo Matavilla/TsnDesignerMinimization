@@ -1,6 +1,7 @@
 #include "GCL.h"
 
 #include <cmath>
+#include <iostream>
 
 uint32_t GCL::Period = 1;
 double GCL::IdleSlopA = 0.65;
@@ -123,7 +124,7 @@ bool GCL::checkAVB() {
 
 bool GCL::addMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
     if (Link_->From->Type == NetElemType::ES) {
-        return addInES(msg, time);
+        return addES(msg, time);
     }
     if (msg.Type == TypeMsg::TT) {
         return addTTMsg(msg, time);
@@ -150,19 +151,9 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
         double& tOut = itTime.second;
         tOut = timeForTransfer;
 
-        if (flag) {
-            tOut += tIn;
-            if (!checkQueueFree(numQueue, tIn, tOut)) {
-                eraseMsg(msg);
-                return false;
-            }
-            Sch.emplace_back(numQueue, msg.Num, tIn, tIn, tOut);
-            lockQueue(numQueue, tIn, tOut);
-            continue;
-        }
-        
         double credit = 0.0;
         double prevEnd = 0;
+        bool flagEnd = true;
         for (auto it = Sch.begin(); it != Sch.end();) {
             double start = it->Offset;
             double end = it->Out;
@@ -189,6 +180,7 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                 it++;
                 prevEnd = end;
             } else {
+                flagEnd = false;
                 credit += (tIn - prevEnd) * idleSlop;
                 double waitTime = 0;
                 if (credit < 0) {
@@ -254,6 +246,16 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
             }
         }
 
+        if (flagEnd or flag) {
+            tOut += tIn;
+            if (!checkQueueFree(numQueue, tIn, tOut)) {
+                eraseMsg(msg);
+                return false;
+            }
+            Sch.emplace_back(numQueue, msg.Num, tIn, tIn, tOut);
+            lockQueue(numQueue, tIn, tOut);
+        }
+        
         // check credit for all messages on this queue
         if (!checkAVB()) {
             eraseMsg(msg);
@@ -272,19 +274,21 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& t
         double tIn = itTime.first;
         double& tOut = itTime.second;
         tOut = timeForTransfer;
-        if (flag) {
+        /*if (flag) {
             tOut += tIn;
             Sch.emplace_back(0, msg.Num, tIn, tIn, tOut);
             lockQueue(0, tIn, tOut);
             continue;
-        }
+        }*/
 
+        bool flagEnd = true;
         for (auto it = Sch.begin(); it != Sch.end();) {
             double start = it->Offset;
             double end = it->Out;
-            if (end <= tIn) {
+            if (end < tIn) {
                 it++;
             } else {
+                flagEnd = false;
                 if ((tIn + timeForTransfer) <= start) {
                     // вставляем в интервал, все круто.
                     tOut += tIn;
@@ -326,6 +330,15 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& t
                 break;
             }
         }
+        if (flagEnd or flag) {
+            if ((Period - tIn) < timeForTransfer) {
+                eraseMsg(msg);
+                return false;
+            }
+            tOut += tIn;
+            Sch.emplace_back(0, msg.Num, tIn, tIn, tOut);
+            lockQueue(0, tIn, tOut);
+        }
     }
     if (!checkAVB()) {
         eraseMsg(msg);
@@ -334,7 +347,7 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& t
     return true;
 }
 
-bool GCL::addInEs(const Message& msg, std::vector<std::pair<double, double>>& time) {
+bool GCL::addES(const Message& msg, std::vector<std::pair<double, double>>& time) {
     uint64_t numFrame = std::ceil(msg.Size / 1500.0);
     double timeForTransfer = ((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth);
 
@@ -348,6 +361,7 @@ bool GCL::addInEs(const Message& msg, std::vector<std::pair<double, double>>& ti
             Sch.emplace_back(0, msg.Num, tIn, tIn, tOut);
             continue;
         }
+
         for (auto it = Sch.begin(); it != Sch.end();) {
             double start = it->Offset;
             double end = it->Out;
@@ -371,7 +385,6 @@ bool GCL::addInEs(const Message& msg, std::vector<std::pair<double, double>>& ti
                     }
 
                     tOut += end;
-                    tIn = end;
                     GCLNote tmp(0, msg.Num, end, tIn, tOut);
 
                     if (it == Sch.end()) {
@@ -384,4 +397,5 @@ bool GCL::addInEs(const Message& msg, std::vector<std::pair<double, double>>& ti
             }
         }
     }
+    return true;
 }

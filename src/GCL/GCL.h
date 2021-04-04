@@ -41,7 +41,7 @@ struct GCL {
 
     bool addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& time);
 
-    bool addInES(const Message& msg, std::vector<std::pair<double, double>>& time);
+    bool addES(const Message& msg, std::vector<std::pair<double, double>>& time);
 
     bool checkAVB();
 
