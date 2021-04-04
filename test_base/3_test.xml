@@ -1,0 +1,94 @@
+<Msg><Type>TT</Type><T>100</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>200</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Network>
+    <ESCount>8</ESCount>
+    <SWCount>4</SWCount>
+    <LCount>13</LCount>
+    <ES>
+        <SenderMSG>1</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>2</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>3</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>4</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>5</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>6</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>7</SenderMSG>
+    </ES>
+    <ES>
+        <ReceiverMSG>1</ReceiverMSG>
+        <ReceiverMSG>2</ReceiverMSG>
+        <ReceiverMSG>3</ReceiverMSG>
+        <ReceiverMSG>4</ReceiverMSG>
+        <ReceiverMSG>5</ReceiverMSG>
+        <ReceiverMSG>6</ReceiverMSG>
+        <ReceiverMSG>7</ReceiverMSG>
+    </ES>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromES>1</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromES>2</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromES>3</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromES>4</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromES>5</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromES>6</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromES>7</FromES>
+        <ToSW>2</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromSW>1</FromSW>
+        <ToSW>3</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>7000</Bandwidth>
+        <FromSW>2</FromSW>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>10</Length><Bandwidth>5000</Bandwidth>
+        <FromSW>2</FromSW>
+        <ToSW>3</ToSW>
+    </Link>
+    <Link><Length>10</Length><Bandwidth>5000</Bandwidth>
+        <FromSW>2</FromSW>
+        <ToSW>4</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromSW>3</FromSW>
+        <ToES>8</ToES>
+    </Link>
+    <Link><Length>10</Length><Bandwidth>5000</Bandwidth>
+        <FromSW>4</FromSW>
+        <ToES>8</ToES>
+    </Link>
+</Network>
