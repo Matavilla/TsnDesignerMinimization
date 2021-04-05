@@ -53,6 +53,8 @@ struct GCL {
 
     int getFirstFreeQueue(const Message& msg, const double& from, const double& to);
 
+    bool checkQueueFree(const size_t& numQ, const double& from, const double& to, double& begin);
+
     bool checkQueueFree(const size_t& numQ, const double& from, const double& to);
 
     GCL(Link* l = nullptr) {
