@@ -114,14 +114,22 @@ bool GCL::checkAVB() {
                     }
                 }
             } else {
-                credit += (start - prevEnd) * idleSlop;
+                double begin = prevEnd;
+                if (checkQueueFree(numQueue, prevEnd, start, begin)) {
+                    credit += (start - prevEnd) * idleSlop;
+                } else {
+                    credit += (begin - prevEnd) * idleSlop;
+                }
+                begin = it->Offset;
                 if (it->NumQueue == numQueue) {
                     if (credit < 0) {
                         return false;
                     }
                     credit -= (it->Out - it->Offset) * sendSlop;
-                } else if (checkQueueFree(numQueue, it->Offset, it->Out)) {
+                } else if (checkQueueFree(numQueue, it->Offset, it->Out, begin)) {
                     credit += (it->Out - start) * idleSlop;
+                } else if (begin > it->Offset) {
+                    credit += (begin - it->Offset) * idleSlop;
                 }
             }
             it++;
@@ -182,18 +190,34 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                         }
                     }
                 } else {
-                    credit += (start - prevEnd) * idleSlop;
+                    double begin = prevEnd;
+                    if (checkQueueFree(numQueue, prevEnd, start, begin)) {
+                        credit += (start - prevEnd) * idleSlop;
+                    } else {
+                        credit += (begin - prevEnd) * idleSlop;
+                    }
+                    begin = start;
                     if (it->NumQueue == numQueue) {
                         credit -= (end - start) * sendSlop;
-                    } else if (checkQueueFree(numQueue, start, end)) {
+                    } else if (checkQueueFree(numQueue, start, end, begin)) {
                         credit += (end - start) * idleSlop;
+                    } else if (begin > start) {
+                        credit += (begin - start) * idleSlop;
                     }
                 }
                 it++;
                 prevEnd = end;
             } else {
                 flagEnd = false;
-                credit += (tIn - prevEnd) * idleSlop;
+                if (tIn <= start) {
+                    credit += (tIn - prevEnd) * idleSlop;
+                } else if (it->NumQueue < 6) {
+                    if ((start - prevEnd) >= timeGB) {
+                        credit += (start - prevEnd - timeGB) * idleSlop;
+                    }
+                } else {
+                    credit += (tIn - prevEnd) * idleSlop;
+                }
                 double waitTime = 0;
                 if (credit < 0) {
                     waitTime = (-credit) / (idleSlop);
@@ -204,7 +228,8 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                     if (it->NumQueue < 6) {
                         freeTime -= timeGB;
                         if (freeTime < 0) {
-                            freeTime = 0;
+                            it++;
+                            continue;
                         }
                     }
                     if (waitTime > 0.0001) { // > 0
@@ -218,8 +243,9 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                     }
 
                     if (waitTime < 0.0001) {
-                        if (it->NumQueue < 6)
+                        if (it->NumQueue < 6) {
                             freeTime += timeGB;
+                        }
 
                         if (freeTime >= timeForTransfer) {
                             double tmp2;

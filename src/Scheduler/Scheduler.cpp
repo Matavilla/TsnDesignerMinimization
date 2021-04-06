@@ -45,12 +45,12 @@ Scheduler::Scheduler(const std::string& dataPath) : RoutFunc(new RoutingDijkstra
         i++;
     }
     MaxMsg = i;
-    
-    std::sort(MSG.begin(), MSG.end(), comp);
 
     GCL::SetPeriod(MSG);
 
     G.init(doc.FirstChildElement("Network"), MSG);
+    
+    //std::sort(MSG.begin(), MSG.end(), comp);
 }
 
 
@@ -239,8 +239,8 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
             }
 
             uint64_t numFrame = std::ceil(msg.Size / 1500);
-            double C = ((double) (numFrame - 1) * 42 + msg.Size - 1500) / (r.Routs[routI][pathI - 1]->Bandwidth);
-
+            //double C = ((double) (numFrame - 1) * 42 + msg.Size - 1500) / (r.Routs[routI][pathI - 1]->Bandwidth);
+            double C = 0;
             std::vector<std::pair<double, double>> tmp(countMsgs);
             for (size_t it = 0; it < countMsgs; it++) {
                 tmp[it].first = r.Times[r.Routs[routI][pathI - 1]][it].second - C;
