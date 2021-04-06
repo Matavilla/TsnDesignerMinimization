@@ -1,0 +1,38 @@
+<Msg><Type>TT</Type><T>100</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>A</Type><T>100</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>A</Type><T>100</T><Size>1500</Size><MaxDur>4000</MaxDur></Msg>
+<Network>
+    <ESCount>4</ESCount>
+    <SWCount>1</SWCount>
+    <LCount>4</LCount>
+    <ES>
+        <SenderMSG>1</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>2</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>3</SenderMSG>
+    </ES>
+    <ES>
+        <ReceiverMSG>1</ReceiverMSG>
+        <ReceiverMSG>2</ReceiverMSG>
+        <ReceiverMSG>3</ReceiverMSG>
+    </ES>
+    <Link><Length>1</Length><Bandwidth>3000</Bandwidth>
+        <FromES>1</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>1500</Bandwidth>
+        <FromES>2</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
+        <FromES>3</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>10</Length><Bandwidth>6000</Bandwidth>
+        <FromSW>1</FromSW>
+        <ToES>4</ToES>
+    </Link>
+</Network>

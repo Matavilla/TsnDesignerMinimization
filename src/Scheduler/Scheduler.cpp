@@ -129,6 +129,9 @@ bool Scheduler::tryBypassSwitchWithBuff(int index, std::vector<Paths>& routes, s
     Paths& r = routes[index];
 
     size_t n = r.UsedLinks.size();
+    if (subSetSize > n) {
+        return false;
+    }
     std::vector<int> indexes(subSetSize);
     for (size_t i = 0; i < subSetSize; i++) indexes[i] = i;
 
