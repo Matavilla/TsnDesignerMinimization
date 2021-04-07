@@ -1,14 +1,15 @@
-<Msg><Type>TT</Type><T>100</T><Size>11</Size><MaxDur>4000</MaxDur></Msg>
-<Msg><Type>TT</Type><T>100</T><Size>12</Size><MaxDur>4000</MaxDur></Msg>
-<Msg><Type>TT</Type><T>100</T><Size>53</Size><MaxDur>4000</MaxDur></Msg>
-<Msg><Type>TT</Type><T>100</T><Size>54</Size><MaxDur>4000</MaxDur></Msg>
-<Msg><Type>A</Type><T>100</T><Size>5</Size><MaxDur>4000</MaxDur></Msg>
-<Msg><Type>A</Type><T>100</T><Size>15</Size><MaxDur>4000</MaxDur></Msg>
-<Msg><Type>B</Type><T>100</T><Size>28</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>500</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>A</Type><T>100</T><Size>5000</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>A</Type><T>100</T><Size>1000</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>B</Type><T>100</T><Size>16</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>B</Type><T>100</T><Size>200</Size><MaxDur>4000</MaxDur></Msg>
 <Network>
-    <ESCount>8</ESCount>
+    <ESCount>9</ESCount>
     <SWCount>1</SWCount>
-    <LCount>8</LCount>
+    <LCount>9</LCount>
     <ES>
         <SenderMSG>1</SenderMSG>
     </ES>
@@ -31,6 +32,9 @@
         <SenderMSG>7</SenderMSG>
     </ES>
     <ES>
+        <SenderMSG>8</SenderMSG>
+    </ES>
+    <ES>
         <ReceiverMSG>1</ReceiverMSG>
         <ReceiverMSG>2</ReceiverMSG>
         <ReceiverMSG>3</ReceiverMSG>
@@ -38,37 +42,42 @@
         <ReceiverMSG>5</ReceiverMSG>
         <ReceiverMSG>6</ReceiverMSG>
         <ReceiverMSG>7</ReceiverMSG>
+        <ReceiverMSG>8</ReceiverMSG>
     </ES>
-    <Link><Length>1</Length><Bandwidth>72</Bandwidth>
+    <Link><Length>1</Length><Bandwidth>370</Bandwidth>
         <FromES>1</FromES>
         <ToSW>1</ToSW>
     </Link>
-    <Link><Length>1</Length><Bandwidth>74</Bandwidth>
+    <Link><Length>1</Length><Bandwidth>358</Bandwidth>
         <FromES>2</FromES>
         <ToSW>1</ToSW>
     </Link>
-    <Link><Length>1</Length><Bandwidth>20</Bandwidth>
+    <Link><Length>1</Length><Bandwidth>100</Bandwidth>
         <FromES>3</FromES>
         <ToSW>1</ToSW>
     </Link>
-    <Link><Length>1</Length><Bandwidth>20</Bandwidth>
+    <Link><Length>1</Length><Bandwidth>100</Bandwidth>
         <FromES>4</FromES>
         <ToSW>1</ToSW>
     </Link>
-    <Link><Length>1</Length><Bandwidth>189</Bandwidth>
+    <Link><Length>1</Length><Bandwidth>50000</Bandwidth>
         <FromES>5</FromES>
         <ToSW>1</ToSW>
     </Link>
-    <Link><Length>1</Length><Bandwidth>70</Bandwidth>
+    <Link><Length>1</Length><Bandwidth>694</Bandwidth>
         <FromES>6</FromES>
         <ToSW>1</ToSW>
     </Link>
-    <Link><Length>1</Length><Bandwidth>70</Bandwidth>
+    <Link><Length>1</Length><Bandwidth>11</Bandwidth>
         <FromES>7</FromES>
         <ToSW>1</ToSW>
     </Link>
-    <Link><Length>1</Length><Bandwidth>100</Bandwidth>
+    <Link><Length>1</Length><Bandwidth>201</Bandwidth>
+        <FromES>8</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>5000</Bandwidth>
         <FromSW>1</FromSW>
-        <ToES>8</ToES>
+        <ToES>9</ToES>
     </Link>
 </Network>

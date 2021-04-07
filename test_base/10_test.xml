@@ -1,0 +1,74 @@
+<Msg><Type>TT</Type><T>100</T><Size>11</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>12</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>53</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>TT</Type><T>100</T><Size>54</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>A</Type><T>100</T><Size>5</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>A</Type><T>100</T><Size>15</Size><MaxDur>4000</MaxDur></Msg>
+<Msg><Type>B</Type><T>100</T><Size>28</Size><MaxDur>4000</MaxDur></Msg>
+<Network>
+    <ESCount>8</ESCount>
+    <SWCount>1</SWCount>
+    <LCount>8</LCount>
+    <ES>
+        <SenderMSG>1</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>2</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>3</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>4</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>5</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>6</SenderMSG>
+    </ES>
+    <ES>
+        <SenderMSG>7</SenderMSG>
+    </ES>
+    <ES>
+        <ReceiverMSG>1</ReceiverMSG>
+        <ReceiverMSG>2</ReceiverMSG>
+        <ReceiverMSG>3</ReceiverMSG>
+        <ReceiverMSG>4</ReceiverMSG>
+        <ReceiverMSG>5</ReceiverMSG>
+        <ReceiverMSG>6</ReceiverMSG>
+        <ReceiverMSG>7</ReceiverMSG>
+    </ES>
+    <Link><Length>1</Length><Bandwidth>72</Bandwidth>
+        <FromES>1</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>74</Bandwidth>
+        <FromES>2</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>20</Bandwidth>
+        <FromES>3</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>20</Bandwidth>
+        <FromES>4</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>189</Bandwidth>
+        <FromES>5</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>70</Bandwidth>
+        <FromES>6</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>70</Bandwidth>
+        <FromES>7</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>100</Bandwidth>
+        <FromSW>1</FromSW>
+        <ToES>8</ToES>
+    </Link>
+</Network>

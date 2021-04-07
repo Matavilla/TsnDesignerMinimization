@@ -315,6 +315,13 @@ bool Scheduler::limitedSearch(int assignedMsgIndex, std::vector<Paths>& routes, 
 };
 
 void Scheduler::printAns() const {
+    for (auto& i : G.Switchs[0].PortGCL) {
+        for (auto& j : i.second.Sch) {
+            std::cout << "N: " << j.NumQueue << " Nmsg: " << j.NumMsg;
+            std::cout << " tIn: " << j.In << " Offset: " << j.Offset;
+            std::cout << " tOut: " << j.Out << std::endl;
+        }
+    }
     std::cout << "Length: " << G.Length() << std::endl;
     std::cout << "MaxLength: " << G.MaxLength << std::endl;
     std::cout << "########################################" << std::endl;
