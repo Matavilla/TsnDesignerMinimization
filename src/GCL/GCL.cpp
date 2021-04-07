@@ -92,7 +92,7 @@ bool GCL::checkAVB() {
     for (size_t numQueue = 6; numQueue < 8; numQueue++) {
         double prevEnd = 0.0;
         double credit = 0.0;
-        double timeGB = 1542 / Link_->Bandwidth;
+        double timeGB = 1542.0 / Link_->Bandwidth;
         double idleSlop = (numQueue == 6) ? IdleSlopA : IdleSlopB;
         idleSlop *= Link_->Bandwidth;
         double sendSlop = Link_->Bandwidth - idleSlop;
@@ -105,9 +105,9 @@ bool GCL::checkAVB() {
                     double begin = 0;
                     if (checkQueueFree(numQueue, prevEnd, start - timeGB, begin)) {
                         credit += delta;
-                    } else if (credit < 0 && (credit + delta) < 0) {
+                    } else if (credit < -0.01 && (credit + delta) < -0.01) {
                         credit += delta;
-                    } else if (credit < 0 && (credit + delta) >= 0) {
+                    } else if (credit < -0.01 && (credit + delta) >= -0.01) {
                         credit = 0;
                     } else {
                         credit += (begin - prevEnd) * idleSlop;
@@ -119,10 +119,13 @@ bool GCL::checkAVB() {
                     credit += (start - prevEnd) * idleSlop;
                 } else {
                     credit += (begin - prevEnd) * idleSlop;
+                    if (credit < -0.01) {
+                        credit += (start - begin) * idleSlop;
+                    }
                 }
                 begin = it->Offset;
                 if (it->NumQueue == numQueue) {
-                    if (credit < 0) {
+                    if (credit < -0.01) {
                         return false;
                     }
                     credit -= (it->Out - it->Offset) * sendSlop;
@@ -154,7 +157,7 @@ bool GCL::addMsg(const Message& msg, std::vector<std::pair<double, double>>& tim
 bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
     uint64_t numFrame = std::ceil(msg.Size / 1500.0);
     double timeForTransfer = ((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth);
-    double timeGB = 1542 / Link_->Bandwidth;
+    double timeGB = 1542.0 / Link_->Bandwidth;
 
     double idleSlop = (msg.Type == TypeMsg::A) ? IdleSlopA : IdleSlopB;
     int numQueue = (msg.Type == TypeMsg::A) ? 6 : 7;
@@ -181,9 +184,9 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                         double begin = 0;
                         if (checkQueueFree(numQueue, prevEnd, start - timeGB, begin)) {
                             credit += delta;
-                        } else if (credit < 0 && (credit + delta) < 0) {
+                        } else if (credit < -0.01 && (credit + delta) < -0.01) {
                             credit += delta;
-                        } else if (credit < 0 && (credit + delta) >= 0) {
+                        } else if (credit < -0.01 && (credit + delta) >= -0.01) {
                             credit = 0;
                         } else {
                             credit += (begin - prevEnd) * idleSlop;
@@ -195,6 +198,9 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                         credit += (start - prevEnd) * idleSlop;
                     } else {
                         credit += (begin - prevEnd) * idleSlop;
+                        if (credit < -0.01) {
+                            credit += (start - begin) * idleSlop;
+                        }
                     }
                     begin = start;
                     if (it->NumQueue == numQueue) {
@@ -219,18 +225,19 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                     credit += (tIn - prevEnd) * idleSlop;
                 }
                 double waitTime = 0;
-                if (credit < 0) {
+                if (credit < -0.01) {
                     waitTime = (-credit) / (idleSlop);
                 }
 
                 while (it != Sch.end()) {
-                    double freeTime = it->Offset - prevEnd;
+                    double freeTime = it->Offset - std::max(tIn, prevEnd);
                     if (it->NumQueue < 6) {
                         freeTime -= timeGB;
-                        if (freeTime < 0) {
-                            it++;
-                            continue;
-                        }
+                    }
+                    if (freeTime < 0) {
+                        prevEnd = it->Out;
+                        it++;
+                        continue;
                     }
                     if (waitTime > 0.0001) { // > 0
                         if (waitTime - freeTime < 0.0001) {

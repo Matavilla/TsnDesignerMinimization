@@ -50,7 +50,7 @@ Scheduler::Scheduler(const std::string& dataPath) : RoutFunc(new RoutingDijkstra
 
     G.init(doc.FirstChildElement("Network"), MSG);
     
-    //std::sort(MSG.begin(), MSG.end(), comp);
+    std::sort(MSG.begin(), MSG.end(), comp);
 }
 
 
