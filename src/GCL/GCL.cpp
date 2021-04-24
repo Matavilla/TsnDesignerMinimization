@@ -410,13 +410,14 @@ bool GCL::addES(const Message& msg, std::vector<std::pair<double, double>>& time
             Sch.emplace_back(0, msg.Num, tIn, tIn, tOut);
             continue;
         }
-
+        bool flagEnd = true;
         for (auto it = Sch.begin(); it != Sch.end();) {
             double start = it->Offset;
             double end = it->Out;
             if (end <= tIn) {
                 it++;
             } else {
+                flagEnd = false;
                 if ((tIn + timeForTransfer) <= start) {
                     // вставляем в интервал, все круто.
                     tOut += tIn;
@@ -444,6 +445,13 @@ bool GCL::addES(const Message& msg, std::vector<std::pair<double, double>>& time
                 }
                 break;
             }
+        }
+        if (flagEnd) {
+            if ((Period - tIn) < timeForTransfer) {
+                return false;
+            }
+            tOut += tIn;
+            Sch.emplace_back(0, msg.Num, tIn, tIn, tOut);
         }
     }
     return true;

@@ -6,6 +6,7 @@ import argparse
 
 NumTests = 1
 NumTestsWith100 = 0
+NumES = 0
 TotalLen = 0
 TotalNumMsg = 0
 TotalBaseLen = 0
@@ -26,47 +27,34 @@ def createParser():
     parser = argparse.ArgumentParser(description="generate tests for topology")
     parser.add_argument('--dirName', type=str)
     parser.add_argument('--fileName', type=str)
-    parser.add_argument('--numES', type=str)
-    parser.add_argument('--baseTest', type=bool)
+    parser.add_argument('--numES', type=int)
+    parser.add_argument('--baseTest', type=str)
     parser.add_argument('--extraLen', type=int)
     parser.add_argument('--typeClass', type=int)
     parser.add_argument('--numMsg', type=int, default=10)
     parser.add_argument('--numTests', type=int, default=1)
     return parser
 
-def checkAns(baseTest, out):
+def checkAns(out):
     global MaxLen
-    print(out)
+    #print(out)
     s = out.split("########################################")
     l = s[0].split('\n')
     m = s[2].split('\n')
     tmp1 = int(l[0].split()[1])
-    tmp2 = int(m[0].split()[1])
+    tmp2 = int(m[1].split()[1])
     MaxLen = int(l[1].split()[1])
-    if baseTest:
-        global TotalBaseLen, TotalBaseNumMsg
-        TotalBaseLen += tmp1
-        TotalBaseNumMsg += tmp2
-    else:
-        global TotalLen, TotalNumMsg
-        TotalLen += tmp1
-        TotalNumMsg += tmp2
     return (tmp1, tmp2)
 
 def printAns(namespace):
-    if namespace.baseTest:
+    if namespace.baseTest == "True":
         print("for base topology:")
         print(f"     TotalLen: {TotalBaseLen / NumTests}")
         print(f"     TotalMsg: {TotalBaseNumMsg / NumTests}")
+        print("")
     print("for full topology:")
-    print(f"     TotalLen: {TotalLen / NumTests}")
-    print(f"     %Len: {(TotalLen / NumTests) / MaxLen}")
-    print("\n")
-    print(f"     TotalMsg: {TotalBaseNumMsg / NumTests}")
-    print(f"     %Msg: {(TotalBaseNumMsg / NumTests) / NumMsg}")
-    print("\n")
-    print(f"     NumTestsWith100: {NumTestsWith100 / NumTests}")
-    print(f"     %Extr: {(MaxLen - TotalLen / NumTests) / namespace.extraLen}")
+    print(f"     TotalLen: {round(TotalLen / NumTests, 2)}      TotalMsg: {round(TotalNumMsg / NumTests, 2)}      NumTestsWith100: {round(NumTestsWith100 / NumTests, 2)}")
+    print(f"     %Len: {round((TotalLen / NumTests) / MaxLen, 2)}           %Msg: {round((TotalNumMsg / NumTests) / NumMsg, 2)}           %Extr: {round((MaxLen - TotalLen / NumTests) / namespace.extraLen, 2)}")
 
 def generateOneTest(fileName, type, data):
     text = ""
@@ -99,22 +87,48 @@ class Data:
 
 def generateData(namespace):
     data = Data()
-    t = 0
-    if namespace.typeClass == 3:
-        t = random.randint(0, 100)
-        if (t < 75):
-            t = 0
-        else:
+    data.ES.clear()
+    data.MSG.clear()
+    for i in range(NumES):
+        data.ES.append([[], []])
+    
+    for i in range(NumMsg):
+        t = 0
+        if namespace.typeClass == 3:
+            t = random.randint(0, 100)
+            if (t < 75):
+                t = 0
+            else:
+                t = 1
+        elif namespace.typeClass == 2:
             t = 1
-    elif namespace.typeClass == 2:
-        t = 1
+        sender = random.randint(0, NumES - 1)
+        data.ES[sender][0].append(i + 1)
 
+        for j in range(DestNumMin, DestNumMax + 1):
+            rec = random.randint(0, NumES - 1)
+            while rec == sender:
+                rec = random.randint(0, NumES - 1)
+            data.ES[rec][1].append(i + 1)
+        
+        periodGCL = 40320
+        msgType = "TT"
+        msgSize = random.randint(MsgSizeMin[t], MsgSizeMax[t])
+        period = random.randint(PeriodMin[t], PeriodMax[t])
+        time = msgSize / 125000.0
+        while (time / period > 0.05 or periodGCL % period != 0):
+            period = random.randint(PeriodMin[t], PeriodMax[t])
+            time = msgSize / 125000.0
+        tmp = (msgSize - MsgSizeMin[t] + 1) / MsgSizeMax[t]
+        dur = TMaxMin[t] + int((TMaxMax[t] - TMaxMin[t]) * tmp)
+        data.MSG.append([msgType, period, msgSize, dur])
     return data
 
 parser = createParser()
 namespace = parser.parse_args(sys.argv[1:])
 NumMsg = namespace.numMsg
 NumTests = namespace.numTests
+NumES = namespace.numES
 
 if not os.path.exists(namespace.dirName):
     os.makedirs(namespace.dirName)
@@ -129,26 +143,31 @@ for i in range(1, NumTests + 1):
 
         data = generateData(namespace)
 
-        if namespace.baseTest:
+        if namespace.baseTest == "True":
             f = open(fileNameForBase, 'w')
             f.write(generateOneTest(namespace.fileName, "Base", data))
             f.close()
 
         f = open(fileNameForFull, 'w')
-        f.write(generateOneTest(namespace.fileName, "Full", data))
+        f.write(generateOneTest(namespace.fileName, "Base", data))
         f.close()
 
         flag = False
-        if namespace.baseTest:
-            process = subprocess.run(f"./TsnDesigner --dataPath {fileNameForBase}", stdout=subprocess.PIPE)
-            length, numMsg = checkAns(namespace.baseTest, process.stdout.decode('utf-8'))
+        if namespace.baseTest == "True":
+            process = subprocess.run(f"./TsnDesigner --dataPath {fileNameForBase}", shell=True, stdout=subprocess.PIPE)
+            length, numMsg = checkAns(process.stdout.decode('utf-8'))
 
             if numMsg != NumMsg:
                 flag = True
                 continue
 
-        process = subprocess.run(f"./TsnDesigner --dataPath {fileNameForFull}", stdout=subprocess.PIPE)
-        length, numMsg = checkAns(False, process.stdout.decode('utf-8'))
+            TotalBaseLen += length
+            TotalBaseNumMsg += numMsg
+
+        process = subprocess.run(f"./TsnDesigner --dataPath {fileNameForFull}", shell=True, stdout=subprocess.PIPE)
+        length, numMsg = checkAns(process.stdout.decode('utf-8'))
         if numMsg == NumMsg:
             NumTestsWith100 += 1
+        TotalLen += length
+        TotalNumMsg += numMsg
 printAns(namespace)
