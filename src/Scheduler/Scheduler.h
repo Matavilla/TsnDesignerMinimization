@@ -27,6 +27,10 @@ class Scheduler {
     void deleteMsg(Message& msg, Paths& r);
 
     bool assignedMsg(Message& msg, Paths& rout, size_t deep = 0, bool flagBypass = true);
+
+    void savePath(std::map<Link*,GCL>& zipGCL, std::map<Link*,std::vector<std::pair<int64_t,int64_t>>>& zipTime, Paths& r);
+
+    void loadPath(std::map<Link*,GCL>& zipGCL, std::map<Link*,std::vector<std::pair<int64_t,int64_t>>>& zipTime, Paths& r);
 public:
     Scheduler(const std::string& dataPath);
     

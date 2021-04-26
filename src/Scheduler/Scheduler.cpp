@@ -63,22 +63,25 @@ void Scheduler::run() {
             i -= 1;
             continue;
         }
-
-        if (!assignedMsg(MSG[i], routes[i])) {
+    std::cout << "MSG " << i << std::endl;
+        if (!assignedMsg(MSG[i], routes[i], 0, false)) {
             // огр.перебор
+            std::cout << "MSG " << i << " limit search" << std::endl;
             if (!limitedSearch(i, routes)) {
-                routes.erase(routes.begin() + i);
-                MSG.erase(MSG.begin() + i);
-                i -= 1;
-                continue;
+                if (!assignedMsg(MSG[i], routes[i])) {
+                    routes.erase(routes.begin() + i);
+                    MSG.erase(MSG.begin() + i);
+                    i -= 1;
+                    continue;
+                }
             }
         }
         
         if (!checkTime(MSG[i], routes[i])) {
-            // огр.перебор + обойти ебучие линки с буферизацией
+            // огр.перебор + обойти линки с буферизацией
             bool flag = false;
-            for (size_t j = 1; j <= 3; j++) {
-                if (tryBypassSwitchWithBuff(i, routes, j)) {
+            for (size_t j = 1; j < 3; j++) {
+                if (false && tryBypassSwitchWithBuff(i, routes, j)) {
                     flag = true;
                     break;
                 }
@@ -94,6 +97,12 @@ void Scheduler::run() {
 
         for (auto& link : routes[i].UsedLinks) {
             link->UsedCount++;
+            for(auto& link2 : G.Links) {
+                if (link2.From == link->To && link2.To == link->From) {
+                    link2.UsedCount++;
+                    break;
+                }
+            }
         }
 
     }
@@ -103,9 +112,9 @@ void Scheduler::run() {
 bool Scheduler::checkTime(Message& msg, Paths& r) {
     for (auto& p : r.Routs) {
         for (size_t i = 0; i < r.Times[p.back()].size(); i++) {
-            double end = r.Times[p.back()][i].second;
-            double start = r.Times[p.front()][i].first;
-            if ((end - start) > msg.MaxDur) {
+            int64_t end = r.Times[p.back()][i].second;
+            int64_t start = r.Times[p.front()][i].first;
+            if ((end - start) > (msg.MaxDur * 1000)) {
                 return false;
             }
         }
@@ -210,14 +219,14 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
         return false;
     }
 
-    size_t countMsgs = GCL::Period / msg.T;
+    size_t countMsgs = GCL::Period / (msg.T * 1000);
     for (size_t routI = 0; routI < r.Routs.size(); routI++) {
         {
             Link* link = r.Routs[routI][0];
             if (!r.Times.contains(link)) {
-                std::vector<std::pair<double, double>> tmp(countMsgs);
+                std::vector<std::pair<int64_t, int64_t>> tmp(countMsgs);
                 for (size_t it = 0; it < countMsgs; it++) {
-                    tmp[it].first = it * msg.T;
+                    tmp[it].first = it * msg.T * 1000;
                 }
                 r.Times[link] = std::move(tmp);
 
@@ -239,9 +248,9 @@ bool Scheduler::assignedMsg(Message& msg, Paths& r, size_t deep, bool flagBypass
             }
 
             uint64_t numFrame = std::ceil(msg.Size / 1500);
-            //double C = ((double) (numFrame - 1) * 42 + msg.Size - 1500) / (r.Routs[routI][pathI - 1]->Bandwidth);
+            // double C = ((double) (numFrame - 1) * 42 + msg.Size - 1500) / (r.Routs[routI][pathI - 1]->Bandwidth);
             double C = 0;
-            std::vector<std::pair<double, double>> tmp(countMsgs);
+            std::vector<std::pair<int64_t, int64_t>> tmp(countMsgs);
             for (size_t it = 0; it < countMsgs; it++) {
                 tmp[it].first = r.Times[r.Routs[routI][pathI - 1]][it].second - C;
             }
@@ -268,12 +277,16 @@ bool Scheduler::limitedSearch(int assignedMsgIndex, std::vector<Paths>& routes, 
     for (size_t i = 0; i < subSetSize; i++) indexes[i] = i;
 
     do {
+        std::vector<std::map<Link*, GCL>> zipGCL(subSetSize);
+        std::vector<std::map<Link*, std::vector<std::pair<int64_t,int64_t>>>> zipTime(subSetSize);
         // снимаем сообщения
-        for (auto& i : indexes) {
+        for (size_t j = 0; auto& i : indexes) {
+            savePath(zipGCL[j], zipTime[j], routes[i]);
             deleteMsg(MSG[i], routes[i]); 
+            j++;
         }
         
-        if (assignedMsg(MSG[assignedMsgIndex], routes[assignedMsgIndex])) {
+        if (assignedMsg(MSG[assignedMsgIndex], routes[assignedMsgIndex], 0, false)) {
             bool flag = false;
             for (auto& i : indexes) {
                 if (!assignedMsg(MSG[i], routes[i], 0, false)) {
@@ -299,7 +312,11 @@ bool Scheduler::limitedSearch(int assignedMsgIndex, std::vector<Paths>& routes, 
         }
 
         // назначаем их
-        for (auto& i : indexes) {
+        for (size_t j = 0; auto& i : indexes) {
+            loadPath(zipGCL[j], zipTime[j], routes[i]);
+            j++;
+        }
+        /* for (auto& i : indexes) {
             if (!assignedMsg(MSG[i], routes[i])) {
                 std::cout << "it's not correct limit search" << std::endl;
             }
@@ -307,7 +324,7 @@ bool Scheduler::limitedSearch(int assignedMsgIndex, std::vector<Paths>& routes, 
             if (!checkTime(MSG[i], routes[i])) {
                 std::cout << "it's not correct limit search in time" << std::endl;
             }
-        }
+        }*/
 
     } while (next_combination(indexes, assignedMsgIndex - 1));
 
@@ -327,4 +344,26 @@ void Scheduler::printAns() const {
     std::cout << "########################################" << std::endl;
     std::cout << "AvgMsg: " << ((double) MSG.size()) / MaxMsg << std::endl;
     std::cout << "########################################" << std::endl;
+}
+
+void Scheduler::savePath(std::map<Link*, GCL>& zipGCL, std::map<Link*, std::vector<std::pair<int64_t,int64_t>>>& zipTime, Paths& r) {
+    for (auto& link : r.UsedLinks) {
+        if (dynamic_cast<EndSystem*>(link->From)) {
+            zipGCL.emplace(link, dynamic_cast<EndSystem*>(link->From)->PortGCL[link]);
+        } else {
+            zipGCL.emplace(link, dynamic_cast<Switch*>(link->From)->PortGCL[link]);
+        }
+    }
+    std::swap(r.Times, zipTime);
+}
+
+void Scheduler::loadPath(std::map<Link*,GCL>& zipGCL, std::map<Link*,std::vector<std::pair<int64_t,int64_t>>>& zipTime, Paths& r) {
+    for (auto& link : r.UsedLinks) {
+        if (dynamic_cast<EndSystem*>(link->From)) {
+            dynamic_cast<EndSystem*>(link->From)->PortGCL[link] = zipGCL[link];
+        } else {
+            dynamic_cast<Switch*>(link->From)->PortGCL[link] = zipGCL[link];
+        }
+    }
+    std::swap(r.Times, zipTime);
 }

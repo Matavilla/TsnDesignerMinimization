@@ -15,7 +15,7 @@ struct Network;
 struct Paths {
     std::vector<std::vector<Link*>> Routs;
     std::set<Link*> UsedLinks;
-    std::map<Link*, std::vector<std::pair<double, double>>> Times;
+    std::map<Link*, std::vector<std::pair<int64_t, int64_t>>> Times;
 };
 
 class RoutingBase {

@@ -16,10 +16,10 @@ MaxLen = 0
 NumMsg = 10
 MsgSizeMin = [1500, 16]
 MsgSizeMax = [100000, 1500]
-PeriodMin = [100, 10]
-PeriodMax = [10000, 1000]
+Periods = [[100, 120, 125, 150, 200, 240, 250, 300, 375, 400, 500, 600, 750, 1000, 1200, 1500, 2000, 3000, 6000], [15, 20, 48, 80, 100, 120, 125, 150, 200, 240, 250, 300, 375, 400, 500, 600, 750, 1000]]
 TMaxMin = [10, 10]
 TMaxMax = [1000, 100]
+TypeMsg = ["TT", "A", "B"]
 DestNumMin = 1
 DestNumMax = 1
 
@@ -111,13 +111,20 @@ def generateData(namespace):
                 rec = random.randint(0, NumES - 1)
             data.ES[rec][1].append(i + 1)
         
-        periodGCL = 40320
-        msgType = "TT"
+        periodGCL = 6000
+        t2 = random.randint(0, 100)
+        if (t2 < 50):
+            t2 = 0
+        elif (60 <= t2 <= 85):
+            t2 = 1
+        else:
+            t2 = 2
+        msgType = TypeMsg[t2]
         msgSize = random.randint(MsgSizeMin[t], MsgSizeMax[t])
-        period = random.randint(PeriodMin[t], PeriodMax[t])
+        period = random.choice(Periods[t])
         time = msgSize / 125000.0
-        while (time / period > 0.05 or periodGCL % period != 0):
-            period = random.randint(PeriodMin[t], PeriodMax[t])
+        while (time / period > 0.05):
+            period = random.choice(Periods[t])
             time = msgSize / 125000.0
         tmp = (msgSize - MsgSizeMin[t] + 1) / MsgSizeMax[t]
         dur = TMaxMin[t] + int((TMaxMax[t] - TMaxMin[t]) * tmp)
@@ -149,7 +156,7 @@ for i in range(1, NumTests + 1):
             f.close()
 
         f = open(fileNameForFull, 'w')
-        f.write(generateOneTest(namespace.fileName, "Base", data))
+        f.write(generateOneTest(namespace.fileName, "Full", data))
         f.close()
 
         flag = False

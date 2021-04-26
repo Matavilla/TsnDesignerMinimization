@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/TsnDesigner",
-            "args": ["--dataPath", "${workspaceFolder}/test/class1/test_1_full.xml"],
+            "args": ["--dataPath", "${workspaceFolder}/test/class1_top2/test_1_full.xml"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -36,7 +36,7 @@ struct Link : public NetElem {
     Link() { Type = NetElemType::LINK; };
 
     double weight() const {
-        return ((double) Length) / (UsedCount + 1);
+        return ((double) Length) / (UsedCount + 1.0);
     }
 };
 

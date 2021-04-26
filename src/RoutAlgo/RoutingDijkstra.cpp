@@ -16,7 +16,7 @@ bool RoutingDijkstra::searchRout(const Network& G, const Message& msg, Paths& ro
     while (!receivers.empty()) {
         bool findPath = false;
         int findReceivers = -1;
-        std::vector<std::pair<int, int>> swToCheck;
+        std::vector<std::pair<int, double>> swToCheck;
         for (auto&& i : visited) i = false;
         for (auto& i : d) i = std::numeric_limits<double>::max();
         for (auto& i : prev) i = -2;

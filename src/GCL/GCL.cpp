@@ -25,31 +25,26 @@ void GCL::SetPeriod(const std::vector<Message>& MSG) {
     for (auto& i : MSG) {
         Period = lcm(Period, i.T);
     }
+    Period *= 1000;
 }
 
-void GCL::freeQueue(const size_t& numQ, const double& from_, const double& to_) {
-    uint64_t from = std::round(from_ * 1000);
-    uint64_t to = std::round(to_ * 1000);
-    for (uint64_t i = from; i < to; i++) {
+void GCL::freeQueue(const size_t& numQ, const int64_t& from, const int64_t& to) {
+    for (int64_t i = from; i < to; i++) {
         SchQueue[i] &= ~(1 << numQ);
     }
 }
 
-void GCL::lockQueue(const size_t& numQ, const double& from_, const double& to_) {
-    uint64_t from = std::round(from_ * 1000);
-    uint64_t to = std::round(to_ * 1000);
-    for (uint64_t i = from; i < to; i++) {
+void GCL::lockQueue(const size_t& numQ, const int64_t& from, const int64_t& to) {
+    for (int64_t i = from; i < to; i++) {
         SchQueue[i] |= (1 << numQ);
     }
 }
 
-bool GCL::checkQueueFree(const size_t& numQ, const double& from_, const double& to_, double& begin) {
-    uint64_t from = std::round(from_ * 1000);
-    uint64_t to = std::round(to_ * 1000);
+bool GCL::checkQueueFree(const size_t& numQ, const int64_t& from, const int64_t& to, int64_t& begin) {
     bool flag = true;
-    for (uint64_t j = from; j < to; j++) {
+    for (int64_t j = from; j < to; j++) {
         if (SchQueue[j] & (1 << numQ)) {
-            begin = j / 1000.0;
+            begin = j;
             flag = false;
             break;
         }
@@ -57,25 +52,24 @@ bool GCL::checkQueueFree(const size_t& numQ, const double& from_, const double& 
     return flag;
 }
 
-bool GCL::checkQueueFree(const size_t& numQ, const double& from_, const double& to_) {
-    double begin;
-    return checkQueueFree(numQ, from_, to_, begin);
+bool GCL::checkQueueFree(const size_t& numQ, const int64_t& from, const int64_t& to) {
+    int64_t begin;
+    return checkQueueFree(numQ, from, to, begin);
 }
 
-int GCL::getFirstFreeQueue(const Message& msg, const double& from_, const double& to_) {
-    for (uint64_t i = 0; i < 6; i++) {
+int GCL::getFirstFreeQueue(const Message& msg, const int64_t& from, const int64_t& to) {
+    for (size_t i = 0; i < 6; i++) {
         if (msg.Type == TypeMsg::A) {
             i = 6;
         } else if (msg.Type == TypeMsg::B) {
             i = 7;
         } 
-        if (checkQueueFree(i, from_, to_)) {
+        if (checkQueueFree(i, from, to)) {
             return i;
         }
     }
     return -1;
 }
-
 
 void GCL::eraseMsg(const Message& msg) {
     for (auto it = Sch.begin(); it != Sch.end();) {
@@ -90,19 +84,19 @@ void GCL::eraseMsg(const Message& msg) {
 
 bool GCL::checkAVB() {
     for (size_t numQueue = 6; numQueue < 8; numQueue++) {
-        double prevEnd = 0.0;
+        int64_t prevEnd = 0;
         double credit = 0.0;
-        double timeGB = 1542.0 / Link_->Bandwidth;
+        int64_t timeGB = (1542.0 / Link_->Bandwidth) * 1000.0;
         double idleSlop = (numQueue == 6) ? IdleSlopA : IdleSlopB;
-        idleSlop *= Link_->Bandwidth;
-        double sendSlop = Link_->Bandwidth - idleSlop;
+        idleSlop *= (Link_->Bandwidth / 1000.0);
+        double sendSlop = (Link_->Bandwidth / 1000.0) - idleSlop;
         for (auto it = Sch.begin(); it != Sch.end();) {
-            double start = it->Offset;
-            double end = it->Out;
+            int64_t start = it->Offset;
+            int64_t end = it->Out;
             if (it->NumQueue < 6) {
                 if (prevEnd <= (start - timeGB)) {
                     double delta = (start - timeGB - prevEnd) * idleSlop;
-                    double begin = 0;
+                    int64_t begin = 0;
                     if (checkQueueFree(numQueue, prevEnd, start - timeGB, begin)) {
                         credit += delta;
                     } else if (credit < -0.01 && (credit + delta) < -0.01) {
@@ -114,7 +108,7 @@ bool GCL::checkAVB() {
                     }
                 }
             } else {
-                double begin = prevEnd;
+                int64_t begin = prevEnd;
                 if (checkQueueFree(numQueue, prevEnd, start, begin)) {
                     credit += (start - prevEnd) * idleSlop;
                 } else {
@@ -142,7 +136,7 @@ bool GCL::checkAVB() {
     return true;
 }
 
-bool GCL::addMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
+bool GCL::addMsg(const Message& msg, std::vector<std::pair<int64_t, int64_t>>& time) {
     if (Link_->From->Type == NetElemType::ES) {
         return addES(msg, time);
     }
@@ -154,34 +148,34 @@ bool GCL::addMsg(const Message& msg, std::vector<std::pair<double, double>>& tim
 }
 
 // need Network Calculus work
-bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
+bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<int64_t, int64_t>>& time) {
     uint64_t numFrame = std::ceil(msg.Size / 1500.0);
-    double timeForTransfer = ((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth);
-    double timeGB = 1542.0 / Link_->Bandwidth;
+    int64_t timeForTransfer = (((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth)) * 1000.0;
+    int64_t timeGB = (1542.0 / Link_->Bandwidth) * 1000.0;
 
     double idleSlop = (msg.Type == TypeMsg::A) ? IdleSlopA : IdleSlopB;
     int numQueue = (msg.Type == TypeMsg::A) ? 6 : 7;
 
-    idleSlop *= Link_->Bandwidth;
-    double sendSlop = Link_->Bandwidth - idleSlop;
+    idleSlop *= (Link_->Bandwidth / 1000.0);
+    double sendSlop = (Link_->Bandwidth / 1000.0) - idleSlop;
 
     bool flag = Sch.empty();
     for (auto& itTime : time) {
-        double tIn = itTime.first;
-        double& tOut = itTime.second;
+        int64_t tIn = itTime.first;
+        int64_t& tOut = itTime.second;
         tOut = timeForTransfer;
 
         double credit = 0.0;
-        double prevEnd = 0;
+        int64_t prevEnd = 0;
         bool flagEnd = true;
         for (auto it = Sch.begin(); it != Sch.end();) {
-            double start = it->Offset;
-            double end = it->Out;
+            int64_t start = it->Offset;
+            int64_t end = it->Out;
             if (end <= tIn) {
                 if (it->NumQueue < 6) {
                     if (prevEnd <= (start - timeGB)) {
                         double delta = (start - timeGB - prevEnd) * idleSlop;
-                        double begin = 0;
+                        int64_t begin = 0;
                         if (checkQueueFree(numQueue, prevEnd, start - timeGB, begin)) {
                             credit += delta;
                         } else if (credit < -0.01 && (credit + delta) < -0.01) {
@@ -193,7 +187,7 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                         }
                     }
                 } else {
-                    double begin = prevEnd;
+                    int64_t begin = prevEnd;
                     if (checkQueueFree(numQueue, prevEnd, start, begin)) {
                         credit += (start - prevEnd) * idleSlop;
                     } else {
@@ -224,13 +218,13 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                 } else {
                     credit += (tIn - prevEnd) * idleSlop;
                 }
-                double waitTime = 0;
+                int64_t waitTime = 0;
                 if (credit < -0.01) {
                     waitTime = (-credit) / (idleSlop);
                 }
 
                 while (it != Sch.end()) {
-                    double freeTime = it->Offset - std::max(tIn, prevEnd);
+                    int64_t freeTime = it->Offset - std::max(tIn, prevEnd);
                     if (it->NumQueue < 6) {
                         freeTime -= timeGB;
                     }
@@ -239,7 +233,7 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                         it++;
                         continue;
                     }
-                    if (waitTime > 0.0001) { // > 0
+                    if (waitTime > 0) { // > 0
                         if (waitTime - freeTime < 0.0001) {
                             freeTime -= waitTime;
                             waitTime = 0;
@@ -249,13 +243,13 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
                         }
                     }
 
-                    if (waitTime < 0.0001) {
+                    if (waitTime <= 0 ) {
                         if (it->NumQueue < 6) {
                             freeTime += timeGB;
                         }
 
                         if (freeTime >= timeForTransfer) {
-                            double tmp2;
+                            int64_t tmp2;
                             tmp2 = std::max(tIn, it->Offset - freeTime);
                             tOut += tmp2;
                             if (tOut <= it->Offset) {
@@ -314,14 +308,14 @@ bool GCL::addAVBMsg(const Message& msg, std::vector<std::pair<double, double>>& 
     return true;
 }
 
-bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& time) {
+bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<int64_t, int64_t>>& time) {
     uint64_t numFrame = std::ceil(msg.Size / 1500.0);
-    double timeForTransfer = ((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth);
+    int64_t timeForTransfer = (((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth)) * 1000.0;
 
     bool flag = Sch.empty();
     for (auto& itTime : time) {
-        double tIn = itTime.first;
-        double& tOut = itTime.second;
+        int64_t tIn = itTime.first;
+        int64_t& tOut = itTime.second;
         tOut = timeForTransfer;
         /*if (flag) {
             tOut += tIn;
@@ -332,8 +326,8 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& t
 
         bool flagEnd = true;
         for (auto it = Sch.begin(); it != Sch.end();) {
-            double start = it->Offset;
-            double end = it->Out;
+            int64_t start = it->Offset;
+            int64_t end = it->Out;
             if (end < tIn) {
                 it++;
             } else {
@@ -396,14 +390,14 @@ bool GCL::addTTMsg(const Message& msg, std::vector<std::pair<double, double>>& t
     return true;
 }
 
-bool GCL::addES(const Message& msg, std::vector<std::pair<double, double>>& time) {
+bool GCL::addES(const Message& msg, std::vector<std::pair<int64_t, int64_t>>& time) {
     uint64_t numFrame = std::ceil(msg.Size / 1500.0);
-    double timeForTransfer = ((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth);
+    int64_t timeForTransfer = (((double) numFrame * 42 + msg.Size) / (Link_->Bandwidth)) * 1000.0;
 
     bool flag = Sch.empty();
     for (auto& itTime : time) {
-        double& tIn = itTime.first;
-        double& tOut = itTime.second;
+        int64_t& tIn = itTime.first;
+        int64_t& tOut = itTime.second;
         tOut = timeForTransfer;
         if (flag) {
             tOut += tIn;
@@ -412,8 +406,8 @@ bool GCL::addES(const Message& msg, std::vector<std::pair<double, double>>& time
         }
         bool flagEnd = true;
         for (auto it = Sch.begin(); it != Sch.end();) {
-            double start = it->Offset;
-            double end = it->Out;
+            int64_t start = it->Offset;
+            int64_t end = it->Out;
             if (end <= tIn) {
                 it++;
             } else {
@@ -422,6 +416,7 @@ bool GCL::addES(const Message& msg, std::vector<std::pair<double, double>>& time
                     // вставляем в интервал, все круто.
                     tOut += tIn;
                     GCLNote tmp(0, msg.Num, tIn, tIn, tOut);
+                    Sch.insert(it, std::move(tmp));
                 } else {
                     it++;
                     while (it != Sch.end() && (it->Offset - end) < timeForTransfer) {
