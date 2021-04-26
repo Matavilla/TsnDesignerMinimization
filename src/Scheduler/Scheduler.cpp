@@ -63,10 +63,10 @@ void Scheduler::run() {
             i -= 1;
             continue;
         }
-    std::cout << "MSG " << i << std::endl;
+    // std::cout << "MSG " << i << std::endl;
         if (!assignedMsg(MSG[i], routes[i], 0, false)) {
             // огр.перебор
-            std::cout << "MSG " << i << " limit search" << std::endl;
+            // std::cout << "MSG " << i << " limit search" << std::endl;
             if (!limitedSearch(i, routes)) {
                 if (!assignedMsg(MSG[i], routes[i])) {
                     routes.erase(routes.begin() + i);
@@ -81,7 +81,7 @@ void Scheduler::run() {
             // огр.перебор + обойти линки с буферизацией
             bool flag = false;
             for (size_t j = 1; j < 3; j++) {
-                if (false && tryBypassSwitchWithBuff(i, routes, j)) {
+                if (tryBypassSwitchWithBuff(i, routes, j)) {
                     flag = true;
                     break;
                 }
@@ -162,7 +162,7 @@ bool Scheduler::tryBypassSwitchWithBuff(int index, std::vector<Paths>& routes, s
         Paths tmp;
         bool flag = false;
         if ((*RoutFunc) (G, msg, tmp)) {
-            if (!assignedMsg(msg, tmp)) {
+            if (!assignedMsg(msg, tmp, 0, false)) {
                 if (limitedSearch(index, routes)) {
                     flag = true;
                 }

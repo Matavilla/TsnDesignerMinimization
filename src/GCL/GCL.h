@@ -82,5 +82,7 @@ struct GCL {
         for (auto& i : g.SchQueue) {
             SchQueue.push_back(i);
         }
+
+        return *this;
     }
 };

@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.8)
 
 project(TsnDesigner)
 
-option(DEBUG "Enable debug" ON)
+option(DEBUG "Enable debug" OFF)
 
 set(CXX_FLAGS_COMMON "-Wall -std=c++2a")
 set(CXX_FLAGS_DEBUG "${CXX_FLAGS_COMMON} -g")
-set(CXX_FLAGS_RELEASE "${CXX_FLAGS_COMMON} -O3 -s")
+set(CXX_FLAGS_RELEASE "${CXX_FLAGS_COMMON} -O3")
 
 if (DEBUG) 
     set(CMAKE_CXX_FLAGS "${CXX_FLAGS_DEBUG}")
