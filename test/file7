@@ -1,0 +1,7 @@
+for base topology:
+     TotalLen: 8.8
+     TotalMsg: 9.0
+
+for full topology:
+     TotalLen: 9.6      TotalMsg: 9.0      NumTestsWith100: 0.2
+     %Len: 0.14           %Msg: 0.2           %Extr: 2.52

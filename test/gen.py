@@ -177,4 +177,6 @@ for i in range(1, NumTests + 1):
             NumTestsWith100 += 1
         TotalLen += length
         TotalNumMsg += numMsg
+        printAns(namespace)
+print("##############################")
 printAns(namespace)

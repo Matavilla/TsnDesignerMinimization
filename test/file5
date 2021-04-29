@@ -1,0 +1,43 @@
+for base topology:
+     TotalLen: 3.2
+     TotalMsg: 5.0
+
+for full topology:
+     TotalLen: 3.2      TotalMsg: 5.0      NumTestsWith100: 0.2
+     %Len: 0.05           %Msg: 0.2           %Extr: 1.27
+for base topology:
+     TotalLen: 6.0
+     TotalMsg: 10.0
+
+for full topology:
+     TotalLen: 6.0      TotalMsg: 10.0      NumTestsWith100: 0.4
+     %Len: 0.09           %Msg: 0.4           %Extr: 1.21
+for base topology:
+     TotalLen: 8.8
+     TotalMsg: 15.0
+
+for full topology:
+     TotalLen: 8.8      TotalMsg: 15.0      NumTestsWith100: 0.6
+     %Len: 0.14           %Msg: 0.6           %Extr: 1.15
+for base topology:
+     TotalLen: 12.0
+     TotalMsg: 20.0
+
+for full topology:
+     TotalLen: 12.0      TotalMsg: 20.0      NumTestsWith100: 0.8
+     %Len: 0.19           %Msg: 0.8           %Extr: 1.08
+for base topology:
+     TotalLen: 15.2
+     TotalMsg: 25.0
+
+for full topology:
+     TotalLen: 15.2      TotalMsg: 25.0      NumTestsWith100: 1.0
+     %Len: 0.24           %Msg: 1.0           %Extr: 1.02
+##############################
+for base topology:
+     TotalLen: 15.2
+     TotalMsg: 25.0
+
+for full topology:
+     TotalLen: 15.2      TotalMsg: 25.0      NumTestsWith100: 1.0
+     %Len: 0.24           %Msg: 1.0           %Extr: 1.02

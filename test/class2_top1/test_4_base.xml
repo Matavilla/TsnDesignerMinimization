@@ -1,0 +1,128 @@
+<Network>
+    <ESCount>4</ESCount>
+    <SWCount>2</SWCount>
+    <LCount>10</LCount>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromES>1</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromES>2</FromES>
+        <ToSW>1</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromES>3</FromES>
+        <ToSW>2</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromES>4</FromES>
+        <ToSW>2</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromSW>1</FromSW>
+        <ToSW>2</ToSW>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromSW>1</FromSW>
+        <ToES>1</ToES>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromSW>1</FromSW>
+        <ToES>2</ToES>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromSW>2</FromSW>
+        <ToES>3</ToES>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromSW>2</FromSW>
+        <ToES>4</ToES>
+    </Link>
+    <Link><Length>1</Length><Bandwidth>125000</Bandwidth>
+        <FromSW>2</FromSW>
+        <ToSW>1</ToSW>
+    </Link>
+<ES>
+<SenderMSG>1</SenderMSG>
+<SenderMSG>2</SenderMSG>
+<SenderMSG>4</SenderMSG>
+<SenderMSG>8</SenderMSG>
+<SenderMSG>14</SenderMSG>
+<SenderMSG>15</SenderMSG>
+<SenderMSG>25</SenderMSG>
+<ReceiverMSG>7</ReceiverMSG>
+<ReceiverMSG>9</ReceiverMSG>
+<ReceiverMSG>19</ReceiverMSG>
+<ReceiverMSG>21</ReceiverMSG>
+</ES>
+<ES>
+<SenderMSG>11</SenderMSG>
+<SenderMSG>16</SenderMSG>
+<SenderMSG>20</SenderMSG>
+<SenderMSG>22</SenderMSG>
+<ReceiverMSG>3</ReceiverMSG>
+<ReceiverMSG>4</ReceiverMSG>
+<ReceiverMSG>5</ReceiverMSG>
+<ReceiverMSG>6</ReceiverMSG>
+<ReceiverMSG>12</ReceiverMSG>
+<ReceiverMSG>23</ReceiverMSG>
+<ReceiverMSG>24</ReceiverMSG>
+<ReceiverMSG>25</ReceiverMSG>
+</ES>
+<ES>
+<SenderMSG>10</SenderMSG>
+<SenderMSG>12</SenderMSG>
+<SenderMSG>19</SenderMSG>
+<SenderMSG>21</SenderMSG>
+<ReceiverMSG>8</ReceiverMSG>
+<ReceiverMSG>11</ReceiverMSG>
+<ReceiverMSG>13</ReceiverMSG>
+<ReceiverMSG>14</ReceiverMSG>
+<ReceiverMSG>16</ReceiverMSG>
+<ReceiverMSG>17</ReceiverMSG>
+<ReceiverMSG>18</ReceiverMSG>
+<ReceiverMSG>20</ReceiverMSG>
+<ReceiverMSG>22</ReceiverMSG>
+</ES>
+<ES>
+<SenderMSG>3</SenderMSG>
+<SenderMSG>5</SenderMSG>
+<SenderMSG>6</SenderMSG>
+<SenderMSG>7</SenderMSG>
+<SenderMSG>9</SenderMSG>
+<SenderMSG>13</SenderMSG>
+<SenderMSG>17</SenderMSG>
+<SenderMSG>18</SenderMSG>
+<SenderMSG>23</SenderMSG>
+<SenderMSG>24</SenderMSG>
+<ReceiverMSG>1</ReceiverMSG>
+<ReceiverMSG>2</ReceiverMSG>
+<ReceiverMSG>10</ReceiverMSG>
+<ReceiverMSG>15</ReceiverMSG>
+</ES>
+</Network>
+<Msg><Type>TT</Type><T>1000</T><Size>515</Size><MaxDur>40</MaxDur></Msg>
+<Msg><Type>TT</Type><T>48</T><Size>706</Size><MaxDur>51</MaxDur></Msg>
+<Msg><Type>TT</Type><T>250</T><Size>371</Size><MaxDur>31</MaxDur></Msg>
+<Msg><Type>A</Type><T>250</T><Size>1372</Size><MaxDur>91</MaxDur></Msg>
+<Msg><Type>TT</Type><T>150</T><Size>570</Size><MaxDur>43</MaxDur></Msg>
+<Msg><Type>TT</Type><T>80</T><Size>575</Size><MaxDur>43</MaxDur></Msg>
+<Msg><Type>A</Type><T>500</T><Size>1137</Size><MaxDur>77</MaxDur></Msg>
+<Msg><Type>B</Type><T>600</T><Size>641</Size><MaxDur>47</MaxDur></Msg>
+<Msg><Type>A</Type><T>1000</T><Size>607</Size><MaxDur>45</MaxDur></Msg>
+<Msg><Type>TT</Type><T>600</T><Size>333</Size><MaxDur>29</MaxDur></Msg>
+<Msg><Type>TT</Type><T>750</T><Size>930</Size><MaxDur>64</MaxDur></Msg>
+<Msg><Type>TT</Type><T>375</T><Size>304</Size><MaxDur>27</MaxDur></Msg>
+<Msg><Type>A</Type><T>300</T><Size>861</Size><MaxDur>60</MaxDur></Msg>
+<Msg><Type>A</Type><T>400</T><Size>1164</Size><MaxDur>78</MaxDur></Msg>
+<Msg><Type>A</Type><T>250</T><Size>723</Size><MaxDur>52</MaxDur></Msg>
+<Msg><Type>TT</Type><T>15</T><Size>1246</Size><MaxDur>83</MaxDur></Msg>
+<Msg><Type>TT</Type><T>750</T><Size>1328</Size><MaxDur>88</MaxDur></Msg>
+<Msg><Type>TT</Type><T>200</T><Size>1068</Size><MaxDur>73</MaxDur></Msg>
+<Msg><Type>TT</Type><T>375</T><Size>646</Size><MaxDur>47</MaxDur></Msg>
+<Msg><Type>TT</Type><T>240</T><Size>108</Size><MaxDur>15</MaxDur></Msg>
+<Msg><Type>B</Type><T>400</T><Size>414</Size><MaxDur>33</MaxDur></Msg>
+<Msg><Type>TT</Type><T>240</T><Size>265</Size><MaxDur>25</MaxDur></Msg>
+<Msg><Type>A</Type><T>375</T><Size>1459</Size><MaxDur>96</MaxDur></Msg>
+<Msg><Type>A</Type><T>120</T><Size>798</Size><MaxDur>56</MaxDur></Msg>
+<Msg><Type>TT</Type><T>400</T><Size>1349</Size><MaxDur>90</MaxDur></Msg>
